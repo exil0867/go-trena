@@ -26,4 +26,4 @@ cd frontend && flutter run
 ```  
 
 ## License  
-Check out the [LICENSE](./LICENSE) file for details.
+Check out the [license](./license) file for details.
