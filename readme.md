@@ -3,9 +3,9 @@
 **go-trena** is an open-source training app for tracking and optimizing workouts, nutrition, and progress.  
 
 ## Features (Planned)  
-- Cardio tracking & logging  
-- Resistance training tracking & logging  
-- Nutrition tracking & logging  
+- Cardio tracking  
+- Resistance training tracking  
+- Nutrition logging  
 - Weight tracking & progress monitoring  
 - Stats & insights  
 
