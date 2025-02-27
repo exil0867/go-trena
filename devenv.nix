@@ -1,6 +1,6 @@
 { pkgs, lib, config, ... }: {
   # https://devenv.sh/packages/
-  packages = [ pkgs.jq pkgs.supabase-cli pkgs.flutterPackages-source.stable ];
+  packages = [ pkgs.jq pkgs.supabase-cli pkgs.flutterPackages-source.stable pkgs.air ];
 
   android = {
     enable = true;
