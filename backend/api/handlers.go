@@ -6,48 +6,21 @@ import (
 	"os"
 	"strings"
 
-	api "github.com/exil0867/go-trena/api/models"
+	"github.com/exil0867/go-trena/api/models"
 	"github.com/exil0867/go-trena/db"
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 	gotrueTypes "github.com/supabase-community/gotrue-go/types"
-	"github.com/supabase-community/postgrest-go"
+	postgrest "github.com/supabase-community/postgrest-go"
 )
 
-// CreateUser handles creating a new user.
-func CreateUser(c fiber.Ctx) error {
-	// Parse the request body into a User struct.
-	var user api.User
-	if err := c.Bind().Body(&user); err != nil {
-		return c.Status(400).SendString("Invalid user payload: " + err.Error())
-	}
-
-	// Execute the insert query.
-	data, _, err := db.Supabase.From("users").Insert(user, false, "", "representation", "").Execute()
-	if err != nil {
-		log.Println("Insert error:", err)
-		return c.Status(500).SendString("Could not create user: " + err.Error())
-	}
-
-	// Unmarshal the returned JSON data into a slice of users.
-	var result []api.User
-	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse created user data: " + err.Error())
-	}
-
-	// Return the newly created user(s) as JSON.
-	return c.JSON(result)
-}
-
-// GetUsers retrieves all users.
 func GetUsers(c fiber.Ctx) error {
 	data, _, err := db.Supabase.From("users").Select("*", "exact", false).Execute()
 	if err != nil {
 		return c.Status(500).SendString("Failed to retrieve users: " + err.Error())
 	}
 
-	// Unmarshal the JSON data into a slice of users.
-	var users []api.User
+	var users []models.User
 	if err := json.Unmarshal(data, &users); err != nil {
 		return c.Status(500).SendString("Failed to parse user data: " + err.Error())
 	}
@@ -55,105 +28,18 @@ func GetUsers(c fiber.Ctx) error {
 	return c.JSON(users)
 }
 
-// GetUser retrieves a user by ID.
-func GetUser(c fiber.Ctx) error {
-	id := c.Params("id")
-
-	data, _, err := db.Supabase.From("users").Select("*", "exact", false).Eq("id", id).Execute()
-	if err != nil {
-		return c.Status(404).SendString("User not found: " + err.Error())
-	}
-
-	// Unmarshal the JSON data into a slice of users.
-	var results []api.User
-	if err := json.Unmarshal(data, &results); err != nil {
-		return c.Status(500).SendString("Failed to parse user data: " + err.Error())
-	}
-	if len(results) == 0 {
-		return c.Status(404).SendString("User not found")
-	}
-
-	// Return the first (and only) user.
-	return c.JSON(results[0])
-}
-
-// UpdateUser updates an existing user.
-func UpdateUser(c fiber.Ctx) error {
-	id := c.Params("id")
-
-	// Bind the request body to a User struct.
-	var user api.User
-	if err := c.Bind().Body(&user); err != nil {
-		return c.Status(400).SendString("Invalid payload: " + err.Error())
-	}
-
-	// Execute the update query.
-	data, _, err := db.Supabase.From("users").Update(user, "representation", "").Eq("id", id).Execute()
-	if err != nil {
-		return c.Status(500).SendString("Could not update user: " + err.Error())
-	}
-
-	// Unmarshal the returned JSON data into a slice of users.
-	var result []api.User
-	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse updated user data: " + err.Error())
-	}
-	if len(result) == 0 {
-		return c.Status(404).SendString("User not found")
-	}
-
-	return c.JSON(result[0])
-}
-
-// DeleteUser deletes a user by ID.
-func DeleteUser(c fiber.Ctx) error {
-	id := c.Params("id")
-
-	_, _, err := db.Supabase.From("users").Delete("representation", "").Eq("id", id).Execute()
-	if err != nil {
-		return c.Status(500).SendString("Failed to delete user: " + err.Error())
-	}
-
-	return c.SendStatus(204)
-}
-
-// GetUsers retrieves all users.
-func GetWorkouts(c fiber.Ctx) error {
-	data, _, err := db.Supabase.From("workouts").Select("*", "exact", false).Execute()
-	if err != nil {
-		return c.Status(500).SendString("Failed to retrieve workouts: " + err.Error())
-	}
-
-	// Unmarshal the JSON data into a slice of workouts.
-	var users []api.Workout
-	if err := json.Unmarshal(data, &users); err != nil {
-		return c.Status(500).SendString("Failed to parse workout data: " + err.Error())
-	}
-
-	return c.JSON(users)
-}
-
-// CreateActivity handles creating a new activity.
 func CreateActivity(c fiber.Ctx) error {
-	type ActivityWithoutID struct {
-		Name string `json:"name"`
-	}
-	var activity api.Activity
+	var activity models.Activity
 	if err := c.Bind().Body(&activity); err != nil {
 		return c.Status(400).SendString("Invalid activity payload: " + err.Error())
 	}
 
-	activityToInsert := ActivityWithoutID{
-		Name: activity.Name,
-	}
-
-	data, _, err := db.Supabase.From("activities").
-		Insert(activityToInsert, false, "", "representation", "").Execute()
+	data, _, err := db.Supabase.From("activities").Insert(activity, false, "", "representation", "").Execute()
 	if err != nil {
 		return c.Status(500).SendString("Could not create activity: " + err.Error())
 	}
 
-	var result []api.Activity
+	var result []models.Activity
 	if err := json.Unmarshal(data, &result); err != nil {
 		return c.Status(500).SendString("Failed to parse created activity data: " + err.Error())
 	}
@@ -161,15 +47,13 @@ func CreateActivity(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// GetActivities retrieves all activities.
 func GetActivities(c fiber.Ctx) error {
-	data, _, err := db.Supabase.From("activities").
-		Select("*", "exact", false).Execute()
+	data, _, err := db.Supabase.From("activities").Select("*", "exact", false).Execute()
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve activities: " + err.Error())
 	}
 
-	var activities []api.Activity
+	var activities []models.Activity
 	if err := json.Unmarshal(data, &activities); err != nil {
 		return c.Status(500).SendString("Failed to parse activities data: " + err.Error())
 	}
@@ -177,20 +61,18 @@ func GetActivities(c fiber.Ctx) error {
 	return c.JSON(activities)
 }
 
-// AddUserActivity creates an association between a user and an activity.
 func AddUserActivity(c fiber.Ctx) error {
-	var ua api.UserActivity
+	var ua models.UserActivity
 	if err := c.Bind().Body(&ua); err != nil {
 		return c.Status(400).SendString("Invalid user activity payload: " + err.Error())
 	}
 
-	data, _, err := db.Supabase.From("user_activities").
-		Insert(ua, false, "", "representation", "").Execute()
+	data, _, err := db.Supabase.From("user_activities").Insert(ua, false, "", "representation", "").Execute()
 	if err != nil {
 		return c.Status(500).SendString("Failed to add activity to user: " + err.Error())
 	}
 
-	var result []api.UserActivity
+	var result []models.UserActivity
 	if err := json.Unmarshal(data, &result); err != nil {
 		return c.Status(500).SendString("Failed to parse added user activity data: " + err.Error())
 	}
@@ -198,20 +80,22 @@ func AddUserActivity(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// GetUserActivities retrieves activities associated with a user.
 func GetUserActivities(c fiber.Ctx) error {
-	userID := c.Params("user_id")
+	claims := c.Locals("user").(jwt.MapClaims)
+	userID := claims["sub"].(string)
+
+	log.Printf("here: %s\n", userID)
 
 	data, _, err := db.Supabase.From("user_activities").
 		Select("activities (*)", "exact", false).
 		Eq("user_id", userID).
 		Execute()
+
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve user activities: " + err.Error())
 	}
 
-	// Unmarshal into a slice of activities.
-	var activities []api.Activity
+	var activities []map[string]interface{}
 	if err := json.Unmarshal(data, &activities); err != nil {
 		return c.Status(500).SendString("Failed to parse user activities data: " + err.Error())
 	}
@@ -219,90 +103,213 @@ func GetUserActivities(c fiber.Ctx) error {
 	return c.JSON(activities)
 }
 
-// CreateWorkoutPlan handles creating a new workout plan.
-func CreateWorkoutPlan(c fiber.Ctx) error {
-	var plan api.WorkoutPlan
+func CreatePlan(c fiber.Ctx) error {
+	var plan models.PlanInsert
 	if err := c.Bind().Body(&plan); err != nil {
-		return c.Status(400).SendString("Invalid workout plan payload: " + err.Error())
+		return c.Status(400).SendString("Invalid plan payload: " + err.Error())
 	}
+	log.Println("here:", plan)
 
-	data, _, err := db.Supabase.From("workout_plans").
-		Insert(plan, false, "", "representation", "").Execute()
+	data, _, err := db.Supabase.From("plans").Insert(plan, false, "", "representation", "").Execute()
 	if err != nil {
-		return c.Status(500).SendString("Could not create workout plan: " + err.Error())
+		return c.Status(500).SendString("Could not create plan: " + err.Error())
 	}
 
-	var result []api.WorkoutPlan
+	var result []models.Plan
 	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse created workout plan data: " + err.Error())
+		return c.Status(500).SendString("Failed to parse created plan data: " + err.Error())
 	}
 
 	return c.JSON(result)
 }
 
-// GetWorkoutPlanDays retrieves days for a given workout plan.
-func GetWorkoutPlanDays(c fiber.Ctx) error {
-	planID := c.Params("plan_id")
+func GetPlan(c fiber.Ctx) error {
+	planID := c.Params("id")
+	data, _, err := db.Supabase.From("plans").Select("*", "exact", false).Eq("id", planID).Execute()
+	if err != nil {
+		return c.Status(404).SendString("Plan not found: " + err.Error())
+	}
 
-	data, _, err := db.Supabase.From("workout_plan_days").
+	var plans []models.Plan
+	if err := json.Unmarshal(data, &plans); err != nil {
+		return c.Status(500).SendString("Failed to parse plan data: " + err.Error())
+	}
+
+	if len(plans) == 0 {
+		return c.Status(404).SendString("Plan not found")
+	}
+
+	return c.JSON(plans[0])
+}
+
+func GetPlans(c fiber.Ctx) error {
+	data, _, err := db.Supabase.From("plans").Select("*", "exact", false).Execute()
+	if err != nil {
+		return c.Status(500).SendString("Could not retrieve plans: " + err.Error())
+	}
+
+	var plans []models.Activity
+	if err := json.Unmarshal(data, &plans); err != nil {
+		return c.Status(500).SendString("Failed to parse plans data: " + err.Error())
+	}
+
+	return c.JSON(plans)
+}
+
+func CreateExerciseGroup(c fiber.Ctx) error {
+	var group models.ExerciseGroup
+	if err := c.Bind().Body(&group); err != nil {
+		return c.Status(400).SendString("Invalid exercise group payload: " + err.Error())
+	}
+
+	data, _, err := db.Supabase.From("exercise_groups").Insert(group, false, "", "representation", "").Execute()
+	if err != nil {
+		return c.Status(500).SendString("Could not create exercise group: " + err.Error())
+	}
+
+	var result []models.ExerciseGroup
+	if err := json.Unmarshal(data, &result); err != nil {
+		return c.Status(500).SendString("Failed to parse created group data: " + err.Error())
+	}
+
+	return c.JSON(result)
+}
+
+func GetExerciseGroupsByPlan(c fiber.Ctx) error {
+	planID := c.Params("plan_id")
+	data, _, err := db.Supabase.From("exercise_groups").
 		Select("*", "exact", false).
-		Eq("workout_plan_id", planID).
+		Eq("plan_id", planID).
 		Execute()
 	if err != nil {
-		return c.Status(500).SendString("Could not retrieve plan days: " + err.Error())
+		return c.Status(500).SendString("Could not retrieve exercise groups: " + err.Error())
 	}
 
-	var days []api.WorkoutPlanDay
-	if err := json.Unmarshal(data, &days); err != nil {
-		return c.Status(500).SendString("Failed to parse workout plan days data: " + err.Error())
+	var groups []models.ExerciseGroup
+	if err := json.Unmarshal(data, &groups); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise groups data: " + err.Error())
 	}
 
-	return c.JSON(days)
+	return c.JSON(groups)
 }
 
-// LogWorkout logs a workout session.
-func LogWorkout(c fiber.Ctx) error {
-	var logEntry api.LoggedWorkout
-	if err := c.Bind().Body(&logEntry); err != nil {
-		return c.Status(400).SendString("Invalid logged workout payload: " + err.Error())
+func CreateExercise(c fiber.Ctx) error {
+	var exercise models.Exercise
+	if err := c.Bind().Body(&exercise); err != nil {
+		return c.Status(400).SendString("Invalid exercise payload: " + err.Error())
 	}
 
-	data, _, err := db.Supabase.From("logged_workouts").
-		Insert(logEntry, false, "", "representation", "").Execute()
+	data, _, err := db.Supabase.From("exercises").Insert(exercise, false, "", "representation", "").Execute()
 	if err != nil {
-		return c.Status(500).SendString("Failed to log workout: " + err.Error())
+		return c.Status(500).SendString("Could not create exercise: " + err.Error())
 	}
 
-	var result []api.LoggedWorkout
+	var result []models.Exercise
 	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse logged workout data: " + err.Error())
+		return c.Status(500).SendString("Failed to parse created exercise data: " + err.Error())
 	}
 
 	return c.JSON(result)
 }
 
-// GetWorkoutHistory retrieves a user's workout history, ordered by date descending.
-func GetWorkoutHistory(c fiber.Ctx) error {
-	userID := c.Params("user_id")
+func GetExercisesByGroup(c fiber.Ctx) error {
+	groupId := c.Params("group_id")
+	data, _, err := db.Supabase.From("exercises").
+		Select("*", "exact", false).
+		Eq("exercise_group_id", groupId).
+		Execute()
+	if err != nil {
+		return c.Status(500).SendString("Could not retrieve exercises: " + err.Error())
+	}
 
-	data, _, err := db.Supabase.From("logged_workouts").
+	var exercises []models.Exercise
+	if err := json.Unmarshal(data, &exercises); err != nil {
+		return c.Status(500).SendString("Failed to parse exercises data: " + err.Error())
+	}
+
+	return c.JSON(exercises)
+}
+
+func GetExerciseCategories(c fiber.Ctx) error {
+	data, _, err := db.Supabase.From("exercise_categories").
+		Select("*", "exact", false).
+		Execute()
+
+	if err != nil {
+		return c.Status(500).SendString("Failed to retrieve exercise categories: " + err.Error())
+	}
+
+	var categories []models.ExerciseCategory
+	if err := json.Unmarshal(data, &categories); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise categories: " + err.Error())
+	}
+
+	return c.JSON(categories)
+}
+
+func CreateExerciseCategory(c fiber.Ctx) error {
+	var category models.ExerciseCategory
+	if err := c.Bind().Body(&category); err != nil {
+		return c.Status(400).SendString("Invalid category payload: " + err.Error())
+	}
+
+	data, _, err := db.Supabase.From("exercise_categories").
+		Insert(category, false, "", "representation", "").
+		Execute()
+
+	if err != nil {
+		return c.Status(500).SendString("Could not create exercise category: " + err.Error())
+	}
+
+	var result []models.ExerciseCategory
+	if err := json.Unmarshal(data, &result); err != nil {
+		return c.Status(500).SendString("Failed to parse created category data: " + err.Error())
+	}
+
+	return c.JSON(result)
+}
+
+func LogExercise(c fiber.Ctx) error {
+	var logEntry models.ExerciseLog
+	if err := c.Bind().Body(&logEntry); err != nil {
+		return c.Status(400).SendString("Invalid exercise log payload: " + err.Error())
+	}
+
+	// if logEntry.ExerciseID == "" || logEntry.UserID == "" || logEntry.Date == "" {
+	// 	return c.Status(400).SendString("Missing required fields")
+	// }
+
+	data, _, err := db.Supabase.From("exercise_logs").Insert(logEntry, false, "", "representation", "").Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to log exercise: " + err.Error())
+	}
+
+	var result []models.ExerciseLog
+	if err := json.Unmarshal(data, &result); err != nil {
+		return c.Status(500).SendString("Failed to parse logged exercise data: " + err.Error())
+	}
+
+	return c.JSON(result)
+}
+
+func GetExerciseLogsByUser(c fiber.Ctx) error {
+	userID := c.Params("user_id")
+	data, _, err := db.Supabase.From("exercise_logs").
 		Select("*", "exact", false).
 		Eq("user_id", userID).
 		Order("date", &postgrest.OrderOpts{Ascending: false}).
 		Execute()
 	if err != nil {
-		return c.Status(500).SendString("Could not retrieve workout history: " + err.Error())
+		return c.Status(500).SendString("Could not retrieve exercise logs: " + err.Error())
 	}
 
-	var history []api.LoggedWorkout
-	if err := json.Unmarshal(data, &history); err != nil {
-		return c.Status(500).SendString("Failed to parse workout history data: " + err.Error())
+	var logs []models.ExerciseLog
+	if err := json.Unmarshal(data, &logs); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise logs data: " + err.Error())
 	}
 
-	return c.JSON(history)
+	return c.JSON(logs)
 }
-
-// AuthMiddleware is the middleware for JWT authentication
 
 func AuthMiddleware(c fiber.Ctx) error {
 	// Exclude some paths from authentication
@@ -340,13 +347,11 @@ func AuthMiddleware(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid token claims"})
 	}
 
-	// Check if the expected claim (e.g., "email") is present
 	if _, exists := claims["email"]; !exists {
 		log.Println("Email claim is missing")
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid token claims"})
 	}
 
-	// If everything is valid, pass the claims to the context
 	c.Locals("user", claims)
 	return c.Next()
 }
@@ -363,7 +368,6 @@ func SignUp(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 	}
 
-	// Create a SignupRequest struct
 	body := gotrueTypes.SignupRequest{
 		Email:    creds.Email,
 		Password: creds.Password,

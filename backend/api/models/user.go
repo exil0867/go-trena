@@ -1,8 +1,21 @@
-package api
+package models
 
-import "github.com/google/uuid"
+import (
+	"time"
 
-// User represents a user in the database.
+	"github.com/google/uuid"
+)
+
 type User struct {
-	ID uuid.UUID `json:"id"`
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type UserActivity struct {
+	ID         uuid.UUID `json:"id"`
+	UserID     uuid.UUID `json:"user_id"`
+	ActivityID uuid.UUID `json:"activity_id"`
+	CreatedAt  time.Time `json:"created_at"`
 }
