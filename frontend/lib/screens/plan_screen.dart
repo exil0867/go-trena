@@ -60,7 +60,7 @@ class PlansScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text('Plans for ${activity['activities']['name']}')),
       body: FutureBuilder<List<dynamic>?>(
-        future: apiService.getPlans(), // Fetch only plans for this activity
+        future: apiService.getPlans(activity['id']),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

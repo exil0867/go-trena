@@ -34,8 +34,8 @@ class ApiService {
     return null;
   }
 
-  Future<List<dynamic>?> getPlans() async {
-    final response = await http.get(Uri.parse('$baseUrl/plans'), headers: _headers());
+  Future<List<dynamic>?> getPlans(String activityId) async {
+    final response = await http.get(Uri.parse('$baseUrl/plans?user_activity_id=$activityId'), headers: _headers());
     if (response.statusCode == 200) {
       return json.decode(response.body) as List;
     }

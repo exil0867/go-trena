@@ -143,7 +143,13 @@ func GetPlan(c fiber.Ctx) error {
 }
 
 func GetPlans(c fiber.Ctx) error {
-	data, _, err := db.Supabase.From("plans").Select("*", "exact", false).Execute()
+	activityId := c.Query("user_activity_id")
+
+	data, _, err := db.Supabase.From("plans").
+		Select("*", "exact", false).
+		Eq("user_activity_id", activityId).
+		Execute()
+
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve plans: " + err.Error())
 	}
