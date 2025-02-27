@@ -28,16 +28,16 @@ class ActivitiesScreen extends StatelessWidget {
           return ListView.builder(
             itemCount: activities.length,
             itemBuilder: (context, index) {
-              final activity = activities[index]['activities'];
+              final activity = activities[index];
               return ListTile(
-  title: Text(activity['name'] ?? 'Activity'),
+  title: Text(activity['activities']['name'] ?? 'Activity'),
   onTap: () {
     // Navigate to activity details or perform an action
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => 
-      PlansScreen(apiService: apiService),
+      PlansScreen(apiService: apiService, activity: activity),
       ),
     );
   },

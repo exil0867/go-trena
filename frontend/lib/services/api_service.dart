@@ -98,7 +98,6 @@ class ApiService {
   }
 
   Future<List<dynamic>?> getUserActivities() async {
-    print("the headers ${_headers()}");
     final response = await http.get(Uri.parse('$baseUrl/user-activities'), headers: _headers());
     if (response.statusCode == 200) return json.decode(response.body) as List;
     return null;

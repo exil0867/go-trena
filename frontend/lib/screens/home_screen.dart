@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _tabs = [
       ActivitiesScreen(apiService: widget.apiService),
-      PlansScreen(apiService: widget.apiService),
+      // PlansScreen(apiService: widget.apiService),
       // Additional tabs (like Workouts or Logs) can be added here.
     ];
   }

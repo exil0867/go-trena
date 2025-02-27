@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -10,7 +8,7 @@ type Plan struct {
 	ID             uuid.UUID `json:"id"`
 	UserActivityID uuid.UUID `json:"user_activity_id"`
 	Name           string    `json:"name"`
-	CreatedAt      time.Time `json:"created_at"`
+	// CreatedAt      time.Time `json:"created_at"`
 }
 
 type PlanInsert struct {

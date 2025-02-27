@@ -8,12 +8,13 @@ import 'plan_screen.dart';
 
 class AddPlanScreen extends StatelessWidget {
   final ApiService apiService;
+  final String activityId;
   final TextEditingController planController = TextEditingController();
 
-  AddPlanScreen({required this.apiService, Key? key}) : super(key: key);
+  AddPlanScreen({required this.apiService, required this.activityId, Key? key}) : super(key: key);
 
   void _addPlan(BuildContext context) async {
-    final planData = {'name': planController.text /*, include additional fields as needed */};
+    final planData = {'name': planController.text, 'user_activity_id': activityId};
     final success = await apiService.createPlan(planData);
     if (success) {
       Navigator.pop(context);
@@ -47,17 +48,19 @@ class AddPlanScreen extends StatelessWidget {
 
 
 
+
 class PlansScreen extends StatelessWidget {
   final ApiService apiService;
+  final Map<String, dynamic> activity;
 
-  const PlansScreen({required this.apiService, Key? key}) : super(key: key);
+  const PlansScreen({required this.apiService, required this.activity, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Plans')),
+      appBar: AppBar(title: Text('Plans for ${activity['activities']['name']}')),
       body: FutureBuilder<List<dynamic>?>(
-        future: apiService.getPlans(),
+        future: apiService.getPlans(), // Fetch only plans for this activity
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -72,10 +75,6 @@ class PlansScreen extends StatelessWidget {
               final plan = plans[index];
               return ListTile(
                 title: Text(plan['name'] ?? 'Unnamed'),
-                onTap: () {
-                  // Here you can navigate to a plan detail screen if needed.
-                  // Navigator.push(context, MaterialPageRoute(builder: (_) => PlanDetailScreen(plan: plan)));
-                },
               );
             },
           );
@@ -83,12 +82,15 @@ class PlansScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to the AddPlanScreen to add a new plan.
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AddPlanScreen(apiService: apiService)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddPlanScreen(apiService: apiService, activityId: activity['id']),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
     );
   }
 }
-

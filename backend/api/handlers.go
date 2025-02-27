@@ -87,7 +87,7 @@ func GetUserActivities(c fiber.Ctx) error {
 	log.Printf("here: %s\n", userID)
 
 	data, _, err := db.Supabase.From("user_activities").
-		Select("activities (*)", "exact", false).
+		Select("id, created_at, activities(id, name, description)", "exact", false).
 		Eq("user_id", userID).
 		Execute()
 
