@@ -1,0 +1,48 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to deploy'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy backend
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} \
+            "docker pull ghcr.io/${{ github.repository }}:${{ inputs.tag }} && \
+             docker stop backend || true && \
+             docker rm backend || true && \
+             docker run -d \
+               --name backend \
+               -p 3004:3004 \
+               -e SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+               -e SUPABASE_KEY=${{ secrets.SUPABASE_KEY }} \
+               ghcr.io/${{ github.repository }}:${{ inputs.tag }}"
+
+      - name: Run Supabase migrations
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} \
+            "docker exec backend /app/main migrate up"
+
+      - name: Deploy frontend
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "frontend/build/web/"
+          target: "/var/www/frontend/"

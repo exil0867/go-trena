@@ -1,0 +1,12 @@
+{
+  "dart.previewFlutterUiGuides": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "dart.openDevTools": "flutter",
+  "flutter.runOnDeviceFailures": "ignore",
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code"
+  }
+}
