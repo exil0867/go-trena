@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/activity.dart';
 import '../screens/home_screen.dart';
 import '../screens/activities_screen.dart';
+import '../screens/exercise_log_screen.dart';
 import '../screens/categories_screen.dart';
 import '../screens/plan_screen.dart';
 import '../services/api_service.dart';
@@ -133,6 +134,20 @@ class _SidebarState extends State<Sidebar> {
                 MaterialPageRoute(
                   builder: (_) =>
                       CategoriesScreen(apiService: widget.apiService),
+                ),
+              );
+            },
+          ),
+          // Add this ListTile in your Drawer's ListView
+          ListTile(
+            leading: const Icon(Icons.fitness_center),
+            title: const Text('Exercise Logs'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ExerciseLogScreen(apiService: widget.apiService),
                 ),
               );
             },

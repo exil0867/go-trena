@@ -144,4 +144,13 @@ class ApiService {
     );
     return response.statusCode == 201;
   }
+
+  Future<List<dynamic>?> getAllExercises() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/exercises'),
+      headers: _headers(),
+    );
+    if (response.statusCode == 200) return json.decode(response.body) as List;
+    return null;
+  }
 }

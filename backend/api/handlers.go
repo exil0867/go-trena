@@ -337,6 +337,23 @@ func GetExerciseLogsByUser(c fiber.Ctx) error {
 	return c.JSON(logs)
 }
 
+func GetExercises(c fiber.Ctx) error {
+	data, _, err := db.Supabase.From("exercises").
+		Select("id,name,description", "exact", false).
+		Execute()
+
+	if err != nil {
+		return c.Status(500).SendString("Could not retrieve exercises: " + err.Error())
+	}
+
+	var exercises []models.Exercise
+	if err := json.Unmarshal(data, &exercises); err != nil {
+		return c.Status(500).SendString("Failed to parse exercises: " + err.Error())
+	}
+
+	return c.JSON(exercises)
+}
+
 func AuthMiddleware(c fiber.Ctx) error {
 	// Exclude some paths from authentication
 	excludedPaths := []string{"/auth/signup", "/auth/login", "/auth/refresh", "/auth/user"}
