@@ -23,6 +23,8 @@ func main() {
 	app.Get("/plans", api.GetPlans)
 	app.Get("/plans/:plan_id/groups", api.GetExerciseGroupsByPlan)
 	app.Post("/exercise-groups", api.CreateExerciseGroup)
+	app.Get("/exercise-groups/:group_id/exercises", api.GetExercisesByGroup) // Add this line
+	app.Post("/exercises", api.CreateExercise)                               // Add this line
 	app.Get("/exercise-categories", api.GetExerciseCategories)
 	app.Post("/exercise-categories", api.CreateExerciseCategory)
 	app.Post("/exercise-logs", api.LogExercise)

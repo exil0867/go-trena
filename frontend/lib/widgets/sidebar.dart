@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/activity.dart';
 import '../screens/home_screen.dart';
 import '../screens/activities_screen.dart';
+import '../screens/categories_screen.dart';
 import '../screens/plan_screen.dart';
 import '../services/api_service.dart';
 
@@ -118,6 +119,20 @@ class _SidebarState extends State<Sidebar> {
                     apiService: widget.apiService,
                     activity: selected,
                   ),
+                ),
+              );
+            },
+          ),
+          // Categories link
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Categories'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CategoriesScreen(apiService: widget.apiService),
                 ),
               );
             },

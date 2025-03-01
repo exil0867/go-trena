@@ -7,6 +7,7 @@ import '../services/supabase_service.dart';
 import '../services/api_service.dart';
 import '../widgets/global_scaffold.dart';
 import 'plan_screen.dart';
+import './exercise_group_screen.dart';
 
 class AddPlanScreen extends StatelessWidget {
   final ApiService apiService;
@@ -65,26 +66,60 @@ class PlansScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlobalScaffold(
       apiService: apiService,
-      body: FutureBuilder<List<dynamic>?>(
-        future: apiService.getPlans(activity.id),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError || snapshot.data == null) {
-            return const Center(child: Text('Error fetching plans'));
-          }
-          final plans = snapshot.data!;
-          return ListView.builder(
-            itemCount: plans.length,
-            itemBuilder: (context, index) {
-              final plan = plans[index];
-              return ListTile(
-                title: Text(plan['name'] ?? 'Unnamed'),
-              );
-            },
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<dynamic>?>(
+              future: apiService.getPlans(activity.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError || snapshot.data == null) {
+                  return const Center(child: Text('Error fetching plans'));
+                }
+                final plans = snapshot.data!;
+                return ListView.builder(
+                  itemCount: plans.length,
+                  itemBuilder: (context, index) {
+                    final plan = plans[index];
+                    return ListTile(
+                      title: Text(plan['name'] ?? 'Unnamed'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ExerciseGroupScreen(
+                              apiService: apiService,
+                              plan: plan,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AddPlanScreen(
+                      apiService: apiService,
+                      activityId: activity.id,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Add Plan'),
+            ),
+          ),
+        ],
       ),
     );
   }

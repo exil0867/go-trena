@@ -256,7 +256,7 @@ func GetExercisesByGroup(c fiber.Ctx) error {
 
 func GetExerciseCategories(c fiber.Ctx) error {
 	data, _, err := db.Supabase.From("exercise_categories").
-		Select("*", "exact", false).
+		Select("id,name,measurement_fields", "exact", false).
 		Execute()
 
 	if err != nil {
@@ -265,6 +265,8 @@ func GetExerciseCategories(c fiber.Ctx) error {
 
 	var categories []models.ExerciseCategory
 	if err := json.Unmarshal(data, &categories); err != nil {
+		// Log the raw data for debugging
+		log.Printf("Raw data: %s", string(data))
 		return c.Status(500).SendString("Failed to parse exercise categories: " + err.Error())
 	}
 

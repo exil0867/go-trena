@@ -126,4 +126,22 @@ class ApiService {
     }
     return null;
   }
+
+  Future<List<dynamic>?> getExercisesByGroup(String groupId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/exercise-groups/$groupId/exercises'),
+      headers: _headers(),
+    );
+    if (response.statusCode == 200) return json.decode(response.body) as List;
+    return null;
+  }
+
+  Future<bool> createExercise(Map<String, dynamic> exerciseData) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/exercises'),
+      headers: _headers(),
+      body: json.encode(exerciseData),
+    );
+    return response.statusCode == 201;
+  }
 }

@@ -1,11 +1,15 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 type ExerciseCategory struct {
-	ID                uuid.UUID              `json:"id"`
-	Name              uuid.UUID              `json:"name"`
-	MeasurementFields map[string]interface{} `json:"measurement_fields"`
+	ID                string          `json:"id"`
+	Name              string          `json:"name"`
+	MeasurementFields json.RawMessage `json:"measurement_fields"`
 }
 
 type Exercise struct {
