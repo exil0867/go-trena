@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter",
+      "type": "dart",
+      "request": "launch",
+      "program": "frontend/lib/main.dart"
+    },
+    {
+      "name": "Go",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/backend/main.go"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Both",
+      "configurations": [
+        "Flutter",
+        "Go"
+      ]
+    }
+  ]
+}
