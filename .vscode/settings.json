@@ -2,7 +2,7 @@
   "dart.previewFlutterUiGuides": true,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true
+    "source.fixAll": "explicit"
   },
   "dart.openDevTools": "flutter",
   "flutter.runOnDeviceFailures": "ignore",

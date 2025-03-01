@@ -14,20 +14,23 @@ class _LoginScreenState extends State<LoginScreen> {
   void _authenticate() async {
     bool success;
     if (isLogin) {
-      success = await widget.supabaseService.login(emailController.text, passwordController.text);
+      success = await widget.supabaseService
+          .login(emailController.text, passwordController.text);
     } else {
-      success = await widget.supabaseService.signUp(emailController.text, passwordController.text);
+      success = await widget.supabaseService
+          .signUp(emailController.text, passwordController.text);
     }
     if (success) {
       // Retrieve session details from Supabase and set them in the API service.
       final session = Supabase.instance.client.auth.currentSession;
       if (session != null) {
         widget.apiService.setAuthToken(session.accessToken);
-        widget.apiService.setUserId(session.user!.id);
+        widget.apiService.setUserId(session.user.id);
       }
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomeScreen(apiService: widget.apiService)),
+        MaterialPageRoute(
+            builder: (_) => HomeScreen(apiService: widget.apiService)),
       );
     } else {
       setState(() {
@@ -44,10 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(controller: emailController, decoration: InputDecoration(labelText: 'Email')),
+            TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: 'Email')),
             TextField(
               controller: passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
             const SizedBox(height: 20),
@@ -74,11 +79,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
 class LoginScreen extends StatefulWidget {
   final SupabaseService supabaseService;
   final ApiService apiService;
 
-  const LoginScreen({required this.supabaseService, required this.apiService, Key? key}) : super(key: key);
+  const LoginScreen(
+      {required this.supabaseService, required this.apiService, super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();

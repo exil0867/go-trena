@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/services/api_service.dart';
+import '../models/activity.dart';
+import '../services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../services/api_service.dart';
+import '../widgets/global_scaffold.dart';
 import 'plan_screen.dart';
 
 class AddPlanScreen extends StatelessWidget {
@@ -11,10 +13,14 @@ class AddPlanScreen extends StatelessWidget {
   final String activityId;
   final TextEditingController planController = TextEditingController();
 
-  AddPlanScreen({required this.apiService, required this.activityId, Key? key}) : super(key: key);
+  AddPlanScreen(
+      {required this.apiService, required this.activityId, super.key});
 
   void _addPlan(BuildContext context) async {
-    final planData = {'name': planController.text, 'user_activity_id': activityId};
+    final planData = {
+      'name': planController.text,
+      'user_activity_id': activityId
+    };
     final success = await apiService.createPlan(planData);
     if (success) {
       Navigator.pop(context);
@@ -33,7 +39,9 @@ class AddPlanScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(controller: planController, decoration: const InputDecoration(labelText: 'Plan Name')),
+            TextField(
+                controller: planController,
+                decoration: const InputDecoration(labelText: 'Plan Name')),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => _addPlan(context),
@@ -46,21 +54,19 @@ class AddPlanScreen extends StatelessWidget {
   }
 }
 
-
-
-
 class PlansScreen extends StatelessWidget {
   final ApiService apiService;
-  final Map<String, dynamic> activity;
+  final Activity activity;
 
-  const PlansScreen({required this.apiService, required this.activity, Key? key}) : super(key: key);
+  const PlansScreen(
+      {required this.apiService, required this.activity, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Plans for ${activity['activities']['name']}')),
+    return GlobalScaffold(
+      apiService: apiService,
       body: FutureBuilder<List<dynamic>?>(
-        future: apiService.getPlans(activity['id']),
+        future: apiService.getPlans(activity.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -79,17 +85,6 @@ class PlansScreen extends StatelessWidget {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddPlanScreen(apiService: apiService, activityId: activity['id']),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }

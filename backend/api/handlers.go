@@ -84,17 +84,28 @@ func GetUserActivities(c fiber.Ctx) error {
 	claims := c.Locals("user").(jwt.MapClaims)
 	userID := claims["sub"].(string)
 
-	log.Printf("here: %s\n", userID)
+	// Get the "activity_id" query parameter (if any)
+	activityID := c.Params("activity_id")
 
-	data, _, err := db.Supabase.From("user_activities").
+	log.Printf("User ID: %s, Activity ID: %s\n", userID, activityID)
+
+	// Start building the query
+	query := db.Supabase.From("user_activities").
 		Select("id, created_at, activities(id, name, description)", "exact", false).
-		Eq("user_id", userID).
-		Execute()
+		Eq("user_id", userID)
 
+	// Apply filtering if activity_id is provided
+	if activityID != "" {
+		query = query.Eq("activity_id", activityID)
+	}
+
+	// Execute the query
+	data, _, err := query.Execute()
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve user activities: " + err.Error())
 	}
 
+	// Parse JSON response
 	var activities []map[string]interface{}
 	if err := json.Unmarshal(data, &activities); err != nil {
 		return c.Status(500).SendString("Failed to parse user activities data: " + err.Error())
@@ -143,12 +154,19 @@ func GetPlan(c fiber.Ctx) error {
 }
 
 func GetPlans(c fiber.Ctx) error {
-	activityId := c.Query("user_activity_id")
+	activityId := c.Params("user_activity_id")
 
-	data, _, err := db.Supabase.From("plans").
-		Select("*", "exact", false).
-		Eq("user_activity_id", activityId).
-		Execute()
+	// Start building the query
+	query := db.Supabase.From("plans").
+		Select("*", "exact", false)
+
+	// Apply filtering if activity_id is provided
+	if activityId != "" {
+		query = query.Eq("activity_id", activityId)
+	}
+
+	// Execute the query
+	data, _, err := query.Execute()
 
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve plans: " + err.Error())

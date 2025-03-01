@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../models/activity.dart';
 
 class ApiService {
   final String baseUrl;
@@ -29,13 +30,19 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>?> getPlan(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl/plans/$id'), headers: _headers());
+    final response =
+        await http.get(Uri.parse('$baseUrl/plans/$id'), headers: _headers());
     if (response.statusCode == 200) return json.decode(response.body);
     return null;
   }
 
-  Future<List<dynamic>?> getPlans(String activityId) async {
-    final response = await http.get(Uri.parse('$baseUrl/plans?user_activity_id=$activityId'), headers: _headers());
+  Future<List<dynamic>?> getPlans(String? activityId) async {
+    final uri = Uri.parse('$baseUrl/plans').replace(
+        queryParameters:
+            activityId != null ? {'user_activity_id': activityId} : {});
+
+    final response = await http.get(uri, headers: _headers());
+
     if (response.statusCode == 200) {
       return json.decode(response.body) as List;
     }
@@ -49,7 +56,8 @@ class ApiService {
   }
 
   Future<List<dynamic>?> getExerciseGroupsByPlan(String planId) async {
-    final response = await http.get(Uri.parse('$baseUrl/plans/$planId/groups'), headers: _headers());
+    final response = await http.get(Uri.parse('$baseUrl/plans/$planId/groups'),
+        headers: _headers());
     if (response.statusCode == 200) return json.decode(response.body) as List;
     return null;
   }
@@ -61,7 +69,8 @@ class ApiService {
   }
 
   Future<List<dynamic>?> getExerciseCategories() async {
-    final response = await http.get(Uri.parse('$baseUrl/exercise-categories'), headers: _headers());
+    final response = await http.get(Uri.parse('$baseUrl/exercise-categories'),
+        headers: _headers());
     if (response.statusCode == 200) return json.decode(response.body) as List;
     return null;
   }
@@ -79,15 +88,24 @@ class ApiService {
   }
 
   Future<List<dynamic>?> getExerciseLogsByUser(String userId) async {
-    final response = await http.get(Uri.parse('$baseUrl/users/$userId/exercise-logs'), headers: _headers());
+    final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/exercise-logs'),
+        headers: _headers());
     if (response.statusCode == 200) return json.decode(response.body) as List;
     return null;
   }
 
-  Future<List<dynamic>?> getActivities() async {
-    final response = await http.get(Uri.parse('$baseUrl/activities'), headers: _headers());
-    if (response.statusCode == 200) return json.decode(response.body) as List;
-    return null;
+  Future<List<Activity>> getActivities() async {
+    final response =
+        await http.get(Uri.parse('$baseUrl/activities'), headers: _headers());
+    if (response.statusCode == 200) {
+      // Decode the response and cast it to a List<dynamic>
+      final List<dynamic> data = json.decode(response.body);
+      // Map each element to an Activity
+      return data.map((json) => Activity.fromJson(json)).toList();
+    }
+    // Return an empty list if the call fails
+    return [];
   }
 
   Future<bool> addUserActivity(Map<String, dynamic> activityData) async {
@@ -97,9 +115,15 @@ class ApiService {
     return response.statusCode == 201;
   }
 
-  Future<List<dynamic>?> getUserActivities() async {
-    final response = await http.get(Uri.parse('$baseUrl/user-activities'), headers: _headers());
-    if (response.statusCode == 200) return json.decode(response.body) as List;
+  Future<List<dynamic>?> getUserActivities(String? activityId) async {
+    final uri = Uri.parse('$baseUrl/user-activities').replace(
+        queryParameters: activityId != null ? {'activity_id': activityId} : {});
+
+    final response = await http.get(uri, headers: _headers());
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List;
+    }
     return null;
   }
 }
