@@ -115,7 +115,7 @@ func GetUserActivities(c fiber.Ctx) error {
 }
 
 func CreatePlan(c fiber.Ctx) error {
-	var plan models.PlanInsert
+	var plan models.UpsertPlan
 	if err := c.Bind().Body(&plan); err != nil {
 		return c.Status(400).SendString("Invalid plan payload: " + err.Error())
 	}
@@ -181,7 +181,7 @@ func GetPlans(c fiber.Ctx) error {
 }
 
 func CreateExerciseGroup(c fiber.Ctx) error {
-	var group models.ExerciseGroup
+	var group models.UpsertExerciseGroup
 	if err := c.Bind().Body(&group); err != nil {
 		return c.Status(400).SendString("Invalid exercise group payload: " + err.Error())
 	}
