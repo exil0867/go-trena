@@ -218,7 +218,7 @@ func GetExerciseGroupsByPlan(c fiber.Ctx) error {
 }
 
 func CreateExercise(c fiber.Ctx) error {
-	var exercise models.Exercise
+	var exercise models.UpsertExercise
 	if err := c.Bind().Body(&exercise); err != nil {
 		return c.Status(400).SendString("Invalid exercise payload: " + err.Error())
 	}
