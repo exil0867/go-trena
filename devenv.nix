@@ -1,16 +1,19 @@
 { pkgs, lib, config, ... }: {
   # https://devenv.sh/packages/
-  packages = [ pkgs.jq pkgs.supabase-cli pkgs.flutterPackages-source.stable pkgs.air ];
+  packages = [ pkgs.jq pkgs.supabase-cli pkgs.air pkgs.watchman pkgs.nodePackages.expo-cli ];
 
   android = {
     enable = true;
-    flutter.enable = true;
+    android-studio = {
+      enable = true;
+    };
   };
 
   # https://devenv.sh/languages/
   languages = {
     go.enable = true;
-    dart.enable = true;
+    javascript.pnpm.enable = true;
+    javascript.enable = true;
   };
 
   enterShell = ''

@@ -11,3 +11,7 @@ devenv.local.nix
 .android
 
 /backend/tmp
+
+/backend/.env
+
+/frontend/.env
