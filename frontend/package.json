@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build-android": "eas build --platform android --local --profile development --non-interactive --output=./build-android",
+    "build-ios": "eas build --platform ios --local --profile development --non-interactive --output=./build-ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
@@ -15,7 +17,6 @@
     "@react-navigation/native": "^7.0.15",
     "@react-navigation/stack": "^7.1.2",
     "@supabase/supabase-js": "^2.49.1",
-    "eas-cli": "^15.0.15",
     "expo": "~52.0.37",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
@@ -33,7 +34,8 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "expo-dev-client": "~5.0.12",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "eas-cli": "15.0.14"
   },
   "private": true
 }

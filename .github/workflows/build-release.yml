@@ -51,7 +51,7 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install
       - name: 🚀 Build Android APK
-        run: npx eas-cli build --platform android --local --profile development --non-interactive --output=./build-android
+        run: pnpm exec eas-cli build --platform android --local --profile development --non-interactive --output=./build-android/go-trena-dev-build.apk
       - name: 🚀 Build Web
         run: |
           npx expo export -p web
@@ -61,7 +61,7 @@ jobs:
         run: mkdir -p ./build-ios
       - name: 🚀 Build iOS (if on macOS runner)
         if: runner.os == 'macOS'
-        run: npx eas-cli build --platform ios --local --profile development --non-interactive --output=./build-ios
+        run: npx eas-cli build --platform ios --local --profile development --non-interactive --output=./build-ios/go-trena-dev-build.ipa
         continue-on-error: true
       - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
