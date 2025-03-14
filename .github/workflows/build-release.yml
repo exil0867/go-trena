@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Expo App
 
 on:
   push:
@@ -6,25 +6,21 @@ on:
       - 'v*'
 
 jobs:
-  build-go:
+  build-backend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
-
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
@@ -33,38 +29,65 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}
 
-  build-flutter:
+  build-expo:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
-
     steps:
-      - uses: actions/checkout@v3
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
         with:
-          channel: stable
+          node-version: 18.x
+          cache: yarn
 
-      - name: Install dependencies
-        run: flutter pub get
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build APK
-        run: flutter build apk --release
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      - name: 📦 Install dependencies
+        run: yarn install
 
-      # - name: Build iOS
-      #   run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+      - name: 🚀 Build Android APK
+        run: npx eas-cli build --platform android --local --profile development --non-interactive --output=./build-android
 
-      - name: Build Web
-        run: flutter build web --release
+      - name: 🚀 Build Web
+        run: |
+          npx expo export -p web
+          cd dist
+          zip -r ../web-build.zip .
 
-      - name: Upload artifacts
+      - name: Create output directory for iOS
+        run: mkdir -p ./build-ios
+
+      - name: 🚀 Build iOS (if on macOS runner)
+        if: runner.os == 'macOS'
+        run: npx eas-cli build --platform ios --local --profile development --non-interactive --output=./build-ios
+        continue-on-error: true
+
+      - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ github.ref_name }}
-          path: |
-            frontend/build/app/outputs/flutter-apk/app-release.apk
-            frontend/build/web/
-          retention-days: 1
+          name: android-release-${{ github.ref_name }}
+          path: ./frontend/build-android/*.apk
+          retention-days: 7
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-release-${{ github.ref_name }}
+          path: ./frontend/web-build.zip
+          retention-days: 7
+
+      - name: Upload iOS artifact (if built)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-${{ github.ref_name }}
+          path: ./frontend/build-ios/*.ipa
+          retention-days: 7

@@ -24,7 +24,7 @@ jobs:
       - name: Static check
         run: go install honnef.co/go/tools/cmd/staticcheck@latest && staticcheck ./...
 
-  lint-flutter:
+  lint-expo:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,9 +33,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          channel: stable
+          node-version: '18'
 
-      - name: Analyze code
-        run: flutter analyze
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # - name: Lint code
+      #   run: pnpm run lint  # ensure you have a lint script in package.json (e.g., "lint": "eslint .")

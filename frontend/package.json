@@ -4,8 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -15,6 +15,7 @@
     "@react-navigation/native": "^7.0.15",
     "@react-navigation/stack": "^7.1.2",
     "@supabase/supabase-js": "^2.49.1",
+    "eas-cli": "^15.0.15",
     "expo": "~52.0.37",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
+    "expo-dev-client": "~5.0.12",
     "typescript": "^5.3.3"
   },
   "private": true

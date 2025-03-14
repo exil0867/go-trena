@@ -4,9 +4,9 @@
 
   android = {
     enable = true;
-    android-studio = {
-      enable = true;
-    };
+    platforms.version = ["34" "35"];
+    reactNative.enable = true;
+    buildTools.version = ["34.0.0" "35.0.0"];
   };
 
   # https://devenv.sh/languages/
