@@ -1,10 +1,8 @@
 name: Build and Release Expo App
-
 on:
   push:
     tags:
       - 'v*'
-
 jobs:
   build-backend:
     runs-on: ubuntu-latest
@@ -28,7 +26,6 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-
   build-expo:
     runs-on: ubuntu-latest
     defaults:
@@ -37,53 +34,43 @@ jobs:
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v3
-
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-          cache: yarn
-
       - name: 🏗 Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-
+          packager: npm
       - name: 📦 Install dependencies
-        run: yarn install
-
+        run: pnpm install
       - name: 🚀 Build Android APK
         run: npx eas-cli build --platform android --local --profile development --non-interactive --output=./build-android
-
       - name: 🚀 Build Web
         run: |
           npx expo export -p web
           cd dist
           zip -r ../web-build.zip .
-
       - name: Create output directory for iOS
         run: mkdir -p ./build-ios
-
       - name: 🚀 Build iOS (if on macOS runner)
         if: runner.os == 'macOS'
         run: npx eas-cli build --platform ios --local --profile development --non-interactive --output=./build-ios
         continue-on-error: true
-
       - name: Upload Android APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-release-${{ github.ref_name }}
           path: ./frontend/build-android/*.apk
           retention-days: 7
-
       - name: Upload Web artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-release-${{ github.ref_name }}
           path: ./frontend/web-build.zip
           retention-days: 7
-
       - name: Upload iOS artifact (if built)
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
