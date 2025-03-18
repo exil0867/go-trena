@@ -5,7 +5,12 @@ import { fetchUserActivities } from '../lib/api';
 
 interface Activity {
   id: string;
-  name: string;
+  created_at: string;
+  activities: {
+    name: string;
+    description: string | null;
+    created_at: string;
+  };
 }
 
 interface AppContextProps {

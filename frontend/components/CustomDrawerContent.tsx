@@ -48,7 +48,7 @@ export default function CustomDrawerContent(props: any) {
                   style={styles.dropdownButton}
                   onPress={() => setMenuVisible(true)}
                 >
-                  {selectedActivity?.name || 'Select Activity'}
+                  {selectedActivity?.activities.name || 'Select Activity'}
                 </Text>
               }
             >
@@ -59,7 +59,7 @@ export default function CustomDrawerContent(props: any) {
                     setSelectedActivity(activity);
                     setMenuVisible(false);
                   }}
-                  title={activity.name}
+                  title={activity.activities.name}
                 />
               ))}
             </Dropdown>
