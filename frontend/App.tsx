@@ -56,6 +56,7 @@ function MainStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        cardStyle: { flex: 1 },
       }}
     >
       <Stack.Screen name="Drawer" component={DrawerNavigator} />
@@ -63,6 +64,7 @@ function MainStack() {
     </Stack.Navigator>
   );
 }
+
 
 export default function App() {
   const [loading, setLoading] = useState(true);
