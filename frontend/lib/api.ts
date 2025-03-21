@@ -48,6 +48,18 @@ export const fetchExerciseCategories = async () => {
   return response.json();
 };
 
+export const addExerciseToGroup = async (groupId: string, exerciseId: string) => {
+  const response = await fetch(`${API_URL}/exercise-groups/${groupId}/exercises`, {
+    method: 'POST',
+    headers: await getHeaders(),
+    body: JSON.stringify({ exercise_id: exerciseId, exercise_group_id: groupId }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to add exercise to group');
+  }
+  return response.json();
+};
+
 export const createExercise = async (newExerciseName: string, newExerciseDescription: string, newExerciseCategoryId: string) => {
 
   const response = await fetch(`${API_URL}/exercises`, {
@@ -152,6 +164,7 @@ export const fetchExerciseGroupsByPlan = async (planId: string) => {
   return response.json();
 };
 
+
 export const createExerciseGroup = async (planId: string, currentDay: number | null, newGroupName: string) => {
   if (currentDay === null || !newGroupName.trim()) return;
 
@@ -174,12 +187,14 @@ export const createExerciseGroup = async (planId: string, currentDay: number | n
 export const createPlan = async (selectedActivityId: string, newPlanName: string) => {
   if (!selectedActivityId || !newPlanName.trim()) return;
 
+  console.log(selectedActivityId)
+
   const response = await fetch(`${API_URL}/plans`, {
     method: 'POST',
     headers: await getHeaders(),
     body: JSON.stringify({
       name: newPlanName.trim(),
-      activity_id: selectedActivityId,
+      user_activity_id: selectedActivityId,
     }),
   });
 

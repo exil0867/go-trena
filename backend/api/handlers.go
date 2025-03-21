@@ -199,6 +199,41 @@ func CreateExerciseGroup(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
+func AddExerciseToGroup(c fiber.Ctx) error {
+	var exerciseGroup models.ExerciseGroupExercise
+
+	if err := c.Bind().Body(&exerciseGroup); err != nil {
+		return c.Status(400).SendString("Invalid exercise group payload: " + err.Error())
+	}
+
+	// Step 1: Insert the exercise to group
+	_, _, err := db.Supabase.From("exercise_group_exercises").
+		Insert(exerciseGroup, false, "", "representation", "").Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to add exercise to group: " + err.Error())
+	}
+
+	// Step 2: Follow-up query to fetch the joined data
+	selectQuery := db.Supabase.From("exercise_group_exercises").
+		Select("exercise_group_id, exercise_id, exercises(id, name, category_id, description)", "exact", false).
+		Eq("exercise_group_id", exerciseGroup.ExerciseGroupID.String())
+
+	// Execute the select query
+	data, _, err := selectQuery.Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to fetch exercises with exercise details: " + err.Error())
+	}
+
+	// Parse the joined data
+	var result []models.ExerciseGroupExercise
+	if err := json.Unmarshal(data, &result); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
+	}
+
+	// Return the joined data as JSON
+	return c.JSON(result)
+}
+
 func GetExerciseGroupsByPlan(c fiber.Ctx) error {
 	planID := c.Params("plan_id")
 	data, _, err := db.Supabase.From("exercise_groups").
@@ -237,18 +272,26 @@ func CreateExercise(c fiber.Ctx) error {
 }
 
 func GetExercisesByGroup(c fiber.Ctx) error {
-	groupId := c.Params("group_id")
-	data, _, err := db.Supabase.From("exercises").
-		Select("*", "exact", false).
-		Eq("exercise_group_id", groupId).
-		Execute()
+	groupID := c.Params("group_id")
+
+	// Log the group ID
+	log.Printf("Fetching exercises for group ID: %s\n", groupID)
+
+	// Start building the query
+	query := db.Supabase.From("exercise_group_exercises").
+		Select("exercise_id, exercises(id, name, category_id, description)", "exact", false).
+		Eq("exercise_group_id", groupID)
+
+	// Execute the query
+	data, _, err := query.Execute()
 	if err != nil {
-		return c.Status(500).SendString("Could not retrieve exercises: " + err.Error())
+		return c.Status(500).SendString("Failed to fetch exercises: " + err.Error())
 	}
 
-	var exercises []models.Exercise
+	// Parse JSON response
+	var exercises []map[string]interface{}
 	if err := json.Unmarshal(data, &exercises); err != nil {
-		return c.Status(500).SendString("Failed to parse exercises data: " + err.Error())
+		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
 	}
 
 	return c.JSON(exercises)

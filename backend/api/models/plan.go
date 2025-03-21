@@ -11,7 +11,6 @@ type Plan struct {
 }
 
 type UpsertPlan struct {
-	ID             uuid.UUID `json:"id"`
 	UserActivityID uuid.UUID `json:"user_activity_id"`
 	Name           string    `json:"name"`
 }

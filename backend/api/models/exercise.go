@@ -13,16 +13,19 @@ type ExerciseCategory struct {
 }
 
 type UpsertExercise struct {
-	ExerciseGroupID uuid.UUID `json:"exercise_group_id"`
-	Name            string    `json:"name"`
-	CategoryID      uuid.UUID `json:"category_id"`
-	Description     string    `json:"description"`
+	Name        string    `json:"name"`
+	CategoryID  uuid.UUID `json:"category_id"`
+	Description string    `json:"description"`
 }
 
 type Exercise struct {
-	ID              uuid.UUID `json:"id"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	CategoryID  uuid.UUID `json:"category_id"`
+	Description string    `json:"description"`
+}
+
+type ExerciseGroupExercise struct {
 	ExerciseGroupID uuid.UUID `json:"exercise_group_id"`
-	Name            string    `json:"name"`
-	CategoryID      uuid.UUID `json:"category_id"`
-	Description     string    `json:"description"`
+	ExerciseID      uuid.UUID `json:"exercise_id"`
 }
