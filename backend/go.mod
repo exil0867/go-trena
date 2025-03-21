@@ -4,7 +4,7 @@ go 1.23.3
 
 require (
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/supabase-community/gotrue-go v1.2.1
