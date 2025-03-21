@@ -6,11 +6,20 @@ import (
 	"github.com/exil0867/go-trena/api"
 	"github.com/exil0867/go-trena/db"
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 func main() {
 	// Initialize Fiber app
 	app := fiber.New()
+
+	// Enable CORS for development
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8081"},
+		AllowMethods:     []string{fiber.MethodGet, fiber.MethodPost, fiber.MethodPut, fiber.MethodDelete, fiber.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	// Initialize Supabase client
 	db.CreateClient()
