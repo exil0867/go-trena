@@ -28,6 +28,40 @@ export const fetchUserActivities = async (userId: string) => {
   return response.json();
 };
 
+
+
+export interface Exercise {
+  id: string;
+  name: string;
+  category_id: string;
+  description: string;
+}
+export interface FetchExercisesByGroupResponse {
+  exercise_group_id: string;
+  group_name: string;
+  exercises: Exercise[];
+}
+
+export interface AddExerciseToGroupResponse {
+  exercise_group_id: string;
+  group_name: string;
+  exercise: Exercise;
+}
+
+
+
+export const fetchExercisesByGroup = async (groupId: string): Promise<FetchExercisesByGroupResponse> => {
+  const response = await fetch(`${API_URL}/exercise-groups/${groupId}/exercises`, {
+    headers: await getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch exercises by group');
+  }
+
+  return response.json();
+};
+
 export const fetchExercises = async () => {
   const response = await fetch(`${API_URL}/exercises`, {
     headers: await getHeaders(),
@@ -37,6 +71,9 @@ export const fetchExercises = async () => {
   }
   return response.json();
 };
+
+
+export const fetchAllExercises = fetchExercises
 
 export const fetchExerciseCategories = async () => {
   const response = await fetch(`${API_URL}/exercise-categories`, {
@@ -48,7 +85,7 @@ export const fetchExerciseCategories = async () => {
   return response.json();
 };
 
-export const addExerciseToGroup = async (groupId: string, exerciseId: string) => {
+export const addExerciseToGroup = async (groupId: string, exerciseId: string): Promise<AddExerciseToGroupResponse> => {
   const response = await fetch(`${API_URL}/exercise-groups/${groupId}/exercises`, {
     method: 'POST',
     headers: await getHeaders(),
@@ -164,9 +201,14 @@ export const fetchExerciseGroupsByPlan = async (planId: string) => {
   return response.json();
 };
 
+interface createExerciseGroupResponse {
+  id: string,
+  plan_id: string,
+  day_of_week: number,
+  name: string,
+}
 
-export const createExerciseGroup = async (planId: string, currentDay: number | null, newGroupName: string) => {
-  if (currentDay === null || !newGroupName.trim()) return;
+export const createExerciseGroup = async (planId: string, currentDay: number | null, newGroupName: string): Promise<createExerciseGroupResponse[]> => {
 
   const response = await fetch(`${API_URL}/exercise-groups`, {
     method: 'POST',
@@ -181,7 +223,7 @@ export const createExerciseGroup = async (planId: string, currentDay: number | n
   if (!response.ok) {
     throw new Error('Failed to add group');
   }
-  return response.json();
+  return (response.json());
 };
 
 export const createPlan = async (selectedActivityId: string, newPlanName: string) => {
@@ -200,26 +242,6 @@ export const createPlan = async (selectedActivityId: string, newPlanName: string
 
   if (!response.ok) {
     throw new Error('Failed to create plan');
-  }
-  return response.json();
-};
-
-export const fetchAllExercises = async () => {
-  const response = await fetch(`${API_URL}/exercises`, {
-    headers: await getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch all exercises');
-  }
-  return response.json();
-};
-
-export const fetchExercisesByGroup = async (groupId: string) => {
-  const response = await fetch(`${API_URL}/exercise-groups/${groupId}/exercises`, {
-    headers: await getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch exercises by group');
   }
   return response.json();
 };

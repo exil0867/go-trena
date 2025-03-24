@@ -17,7 +17,9 @@ import {
   fetchExerciseGroupsByPlan,
   fetchExercisesByGroup,
   fetchAllExercises,
-  addExerciseToGroup
+  addExerciseToGroup,
+  FetchExercisesByGroupResponse,
+  Exercise
 } from '../lib/api';
 
 interface Plan {
@@ -33,20 +35,6 @@ interface ExerciseGroup {
   day_of_week: number;
 }
 
-interface Exercise {
-  id: string;
-  name: string;
-  description: string;
-  category_id: string;
-  exercise_group_id?: string;
-  category_name?: string;
-  exercises?: {
-    id: string;
-    name: string;
-    description: string;
-    category_id: string;
-  };
-}
 
 // Define a day item structure for FlatList
 interface DayItem {
@@ -61,10 +49,10 @@ export default function PlanDetailScreen() {
 
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<ExerciseGroup[]>([]);
-  const [exercises, setExercises] = useState<Record<string, Exercise[]>>({});
+  const [exercises, setExercises] = useState<Record<string, FetchExercisesByGroupResponse['exercises']>>({});
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-
+  // console.log(exercises['asfd'])
   // Group dialog state
   const [groupDialogVisible, setGroupDialogVisible] = useState(false);
   const [currentDay, setCurrentDay] = useState<number | null>(null);
@@ -129,10 +117,10 @@ export default function PlanDetailScreen() {
     try {
       const data = await fetchExercisesByGroup(groupId);
 
-      if (data && Array.isArray(data)) {
+      if (data) {
         setExercises(prev => ({
           ...prev,
-          [groupId]: data
+          [groupId]: data.exercises
         }));
       }
     } catch (error) {
@@ -145,7 +133,7 @@ export default function PlanDetailScreen() {
 
     try {
       const newGroup = await createExerciseGroup(plan.id, currentDay, newGroupName);
-      setGroups([...groups, newGroup]);
+      setGroups((prev) => [...prev, newGroup[0]]);
       setNewGroupName('');
       setGroupDialogVisible(false);
     } catch (error) {
@@ -165,7 +153,7 @@ export default function PlanDetailScreen() {
         const currentExercises = prev[currentGroupId] || [];
         return {
           ...prev,
-          [currentGroupId]: [...currentExercises, result],
+          [currentGroupId]: [...currentExercises, result.exercise],
         };
       });
 
@@ -218,19 +206,6 @@ export default function PlanDetailScreen() {
     // navigation.navigate('ExerciseDetail', { exercise });
   };
 
-  // Helper function to get exercise name and description safely
-  const getExerciseDetails = (exercise: Exercise) => {
-    if (exercise.exercises) {
-      return {
-        name: exercise.exercises.name,
-        description: exercise.exercises.description
-      };
-    }
-    return {
-      name: exercise.name,
-      description: exercise.description
-    };
-  };
 
   // Render each day item
   const renderDayItem = ({ item }: { item: DayItem }) => {
@@ -257,13 +232,12 @@ export default function PlanDetailScreen() {
                 >
                   {exercises[group.id] ? (
                     exercises[group.id].length > 0 ? (
-                      exercises[group.id].map((exercise) => {
-                        const details = getExerciseDetails(exercise);
+                      exercises[group.id].map((exercise, i) => {
                         return (
                           <List.Item
-                            key={exercise.id || exercise.exercises?.id}
-                            title={details.name}
-                            description={details.description}
+                            key={i}
+                            title={exercise.name}
+                            description={exercise.description}
                             onPress={() => navigateToExerciseDetail(exercise)}
                             left={props => <List.Icon {...props} icon="weight-lifter" />}
                           />

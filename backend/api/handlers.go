@@ -10,6 +10,7 @@ import (
 	"github.com/exil0867/go-trena/db"
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	gotrueTypes "github.com/supabase-community/gotrue-go/types"
 	postgrest "github.com/supabase-community/postgrest-go"
 )
@@ -201,37 +202,92 @@ func CreateExerciseGroup(c fiber.Ctx) error {
 
 func AddExerciseToGroup(c fiber.Ctx) error {
 	var exerciseGroup models.ExerciseGroupExercise
-
 	if err := c.Bind().Body(&exerciseGroup); err != nil {
 		return c.Status(400).SendString("Invalid exercise group payload: " + err.Error())
 	}
 
-	// Step 1: Insert the exercise to group
-	_, _, err := db.Supabase.From("exercise_group_exercises").
-		Insert(exerciseGroup, false, "", "representation", "").Execute()
+	// Check if exercise group exists
+	groupData, _, err := db.Supabase.From("exercise_groups").
+		Select("id, name", "exact", false).
+		Eq("id", exerciseGroup.ExerciseGroupID.String()).
+		Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to check if exercise group exists: " + err.Error())
+	}
+
+	var groups []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(groupData, &groups); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise group data: " + err.Error())
+	}
+
+	if len(groups) == 0 {
+		return c.Status(404).SendString("Exercise group not found")
+	}
+	groupName := groups[0].Name
+
+	// Check if exercise exists
+	exerciseData, _, err := db.Supabase.From("exercises").
+		Select("id, name, category_id, description", "exact", false).
+		Eq("id", exerciseGroup.ExerciseID.String()).
+		Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to check if exercise exists: " + err.Error())
+	}
+
+	var exercises []struct {
+		ID          string `json:"id"`
+		Name        string `json:"name"`
+		CategoryID  string `json:"category_id"`
+		Description string `json:"description"`
+	}
+	if err := json.Unmarshal(exerciseData, &exercises); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
+	}
+
+	if len(exercises) == 0 {
+		return c.Status(404).SendString("Exercise not found")
+	}
+	exercise := exercises[0]
+
+	// Insert the exercise to group
+	_, _, err = db.Supabase.From("exercise_group_exercises").
+		Insert(exerciseGroup, false, "", "representation", "").
+		Execute()
 	if err != nil {
 		return c.Status(500).SendString("Failed to add exercise to group: " + err.Error())
 	}
 
-	// Step 2: Follow-up query to fetch the joined data
-	selectQuery := db.Supabase.From("exercise_group_exercises").
-		Select("exercise_group_id, exercise_id, exercises(id, name, category_id, description)", "exact", false).
-		Eq("exercise_group_id", exerciseGroup.ExerciseGroupID.String())
-
-	// Execute the select query
-	data, _, err := selectQuery.Execute()
-	if err != nil {
-		return c.Status(500).SendString("Failed to fetch exercises with exercise details: " + err.Error())
+	// Prepare the response as a single object (not an array)
+	response := struct {
+		ExerciseGroupID string `json:"exercise_group_id"`
+		GroupName       string `json:"group_name"`
+		Exercise        struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			CategoryID  string `json:"category_id"`
+			Description string `json:"description"`
+		} `json:"exercise"`
+	}{
+		ExerciseGroupID: exerciseGroup.ExerciseGroupID.String(),
+		GroupName:       groupName,
+		Exercise: struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			CategoryID  string `json:"category_id"`
+			Description string `json:"description"`
+		}{
+			ID:          exercise.ID,
+			Name:        exercise.Name,
+			CategoryID:  exercise.CategoryID,
+			Description: exercise.Description,
+		},
 	}
 
-	// Parse the joined data
-	var result []models.ExerciseGroupExercise
-	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
-	}
-
-	// Return the joined data as JSON
-	return c.JSON(result)
+	// Return the response as a single JSON object
+	return c.JSON(response)
 }
 
 func GetExerciseGroupsByPlan(c fiber.Ctx) error {
@@ -273,28 +329,95 @@ func CreateExercise(c fiber.Ctx) error {
 
 func GetExercisesByGroup(c fiber.Ctx) error {
 	groupID := c.Params("group_id")
-
-	// Log the group ID
 	log.Printf("Fetching exercises for group ID: %s\n", groupID)
 
-	// Start building the query
-	query := db.Supabase.From("exercise_group_exercises").
-		Select("exercise_id, exercises(id, name, category_id, description)", "exact", false).
-		Eq("exercise_group_id", groupID)
+	// Verify the group exists
+	groupData, _, err := db.Supabase.From("exercise_groups").
+		Select("id, name", "exact", false).
+		Eq("id", groupID).
+		Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to verify exercise group: " + err.Error())
+	}
 
-	// Execute the query
-	data, _, err := query.Execute()
+	// Parse group data
+	var groups []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(groupData, &groups); err != nil {
+		return c.Status(500).SendString("Failed to parse group data: " + err.Error())
+	}
+
+	// If no group found, return 404
+	if len(groups) == 0 {
+		return c.Status(404).SendString("Exercise group not found")
+	}
+
+	// Group exists, now fetch exercises
+	data, _, err := db.Supabase.From("exercise_group_exercises").
+		Select("exercise_group_id, exercise_id, exercises(id, name, category_id, description)", "exact", false).
+		Eq("exercise_group_id", groupID).
+		Execute()
 	if err != nil {
 		return c.Status(500).SendString("Failed to fetch exercises: " + err.Error())
 	}
 
-	// Parse JSON response
-	var exercises []map[string]interface{}
-	if err := json.Unmarshal(data, &exercises); err != nil {
-		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
+	// Parse group UUID
+	groupUUID, err := uuid.Parse(groupID)
+	if err != nil {
+		return c.Status(400).SendString("Invalid group ID format")
 	}
 
-	return c.JSON(exercises)
+	response := models.GroupExercisesResponse{
+		ExerciseGroupID: groupUUID,
+		GroupName:       groups[0].Name,
+		Exercises:       []models.Exercise{},
+	}
+
+	// If there are no exercises, we'll still return the group with empty exercises array
+	if len(data) > 0 {
+		// Custom struct to handle the joined data from Supabase
+		type JoinResult struct {
+			ExerciseGroupID string `json:"exercise_group_id"`
+			ExerciseID      string `json:"exercise_id"`
+			Exercises       struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				CategoryID  string `json:"category_id"`
+				Description string `json:"description"`
+			} `json:"exercises"`
+		}
+
+		// Parse JSON response for exercises
+		var joinResults []JoinResult
+		if err := json.Unmarshal(data, &joinResults); err != nil {
+			return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
+		}
+
+		// Convert each exercise to our Exercise model
+		for _, result := range joinResults {
+			exerciseID, err := uuid.Parse(result.ExerciseID)
+			if err != nil {
+				continue // Skip invalid IDs
+			}
+
+			categoryID, err := uuid.Parse(result.Exercises.CategoryID)
+			if err != nil {
+				continue // Skip invalid category IDs
+			}
+
+			exercise := models.Exercise{
+				ID:          exerciseID,
+				Name:        result.Exercises.Name,
+				CategoryID:  categoryID,
+				Description: result.Exercises.Description,
+			}
+			response.Exercises = append(response.Exercises, exercise)
+		}
+	}
+
+	return c.JSON(response)
 }
 
 func GetExerciseCategories(c fiber.Ctx) error {
