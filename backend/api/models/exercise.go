@@ -1,33 +1,20 @@
 package models
 
 import (
-	"encoding/json"
-
 	"github.com/google/uuid"
 )
 
-type ExerciseCategory struct {
-	ID                uuid.UUID       `json:"id"`
-	Name              string          `json:"name"`
-	MeasurementFields json.RawMessage `json:"measurement_fields"`
-}
-
-type UpsertExerciseCategory struct {
-	Name              string          `json:"name"`
-	MeasurementFields json.RawMessage `json:"measurement_fields"`
-}
-
 type Exercise struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	CategoryID  uuid.UUID `json:"category_id"`
-	Description string    `json:"description"`
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	TrackingType string    `json:"tracking_type"`
 }
 
 type UpsertExercise struct {
-	Name        string    `json:"name"`
-	CategoryID  uuid.UUID `json:"category_id"`
-	Description string    `json:"description"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	TrackingType string `json:"tracking_type"`
 }
 
 type ExerciseGroupExercise struct {

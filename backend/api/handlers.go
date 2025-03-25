@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/exil0867/go-trena/api/models"
 	"github.com/exil0867/go-trena/db"
@@ -12,7 +13,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	gotrueTypes "github.com/supabase-community/gotrue-go/types"
-	postgrest "github.com/supabase-community/postgrest-go"
 )
 
 func GetUsers(c fiber.Ctx) error {
@@ -230,7 +230,7 @@ func AddExerciseToGroup(c fiber.Ctx) error {
 
 	// Check if exercise exists
 	exerciseData, _, err := db.Supabase.From("exercises").
-		Select("id, name, category_id, description", "exact", false).
+		Select("id, name, description", "exact", false).
 		Eq("id", exerciseGroup.ExerciseID.String()).
 		Execute()
 	if err != nil {
@@ -240,7 +240,6 @@ func AddExerciseToGroup(c fiber.Ctx) error {
 	var exercises []struct {
 		ID          string `json:"id"`
 		Name        string `json:"name"`
-		CategoryID  string `json:"category_id"`
 		Description string `json:"description"`
 	}
 	if err := json.Unmarshal(exerciseData, &exercises); err != nil {
@@ -267,7 +266,6 @@ func AddExerciseToGroup(c fiber.Ctx) error {
 		Exercise        struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
-			CategoryID  string `json:"category_id"`
 			Description string `json:"description"`
 		} `json:"exercise"`
 	}{
@@ -276,12 +274,10 @@ func AddExerciseToGroup(c fiber.Ctx) error {
 		Exercise: struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
-			CategoryID  string `json:"category_id"`
 			Description string `json:"description"`
 		}{
 			ID:          exercise.ID,
 			Name:        exercise.Name,
-			CategoryID:  exercise.CategoryID,
 			Description: exercise.Description,
 		},
 	}
@@ -356,7 +352,7 @@ func GetExercisesByGroup(c fiber.Ctx) error {
 
 	// Group exists, now fetch exercises
 	data, _, err := db.Supabase.From("exercise_group_exercises").
-		Select("exercise_group_id, exercise_id, exercises(id, name, category_id, description)", "exact", false).
+		Select("exercise_group_id, exercise_id, exercises(id, name, description, tracking_type)", "exact", false).
 		Eq("exercise_group_id", groupID).
 		Execute()
 	if err != nil {
@@ -382,10 +378,10 @@ func GetExercisesByGroup(c fiber.Ctx) error {
 			ExerciseGroupID string `json:"exercise_group_id"`
 			ExerciseID      string `json:"exercise_id"`
 			Exercises       struct {
-				ID          string `json:"id"`
-				Name        string `json:"name"`
-				CategoryID  string `json:"category_id"`
-				Description string `json:"description"`
+				ID           string `json:"id"`
+				Name         string `json:"name"`
+				TrackingType string `json:"tracking_type"`
+				Description  string `json:"description"`
 			} `json:"exercises"`
 		}
 
@@ -402,16 +398,11 @@ func GetExercisesByGroup(c fiber.Ctx) error {
 				continue // Skip invalid IDs
 			}
 
-			categoryID, err := uuid.Parse(result.Exercises.CategoryID)
-			if err != nil {
-				continue // Skip invalid category IDs
-			}
-
 			exercise := models.Exercise{
-				ID:          exerciseID,
-				Name:        result.Exercises.Name,
-				CategoryID:  categoryID,
-				Description: result.Exercises.Description,
+				ID:           exerciseID,
+				Name:         result.Exercises.Name,
+				TrackingType: result.Exercises.TrackingType,
+				Description:  result.Exercises.Description,
 			}
 			response.Exercises = append(response.Exercises, exercise)
 		}
@@ -420,57 +411,37 @@ func GetExercisesByGroup(c fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-func GetExerciseCategories(c fiber.Ctx) error {
-	data, _, err := db.Supabase.From("exercise_categories").
-		Select("id,name,measurement_fields", "exact", false).
-		Execute()
-
-	if err != nil {
-		return c.Status(500).SendString("Failed to retrieve exercise categories: " + err.Error())
-	}
-
-	var categories []models.ExerciseCategory
-	if err := json.Unmarshal(data, &categories); err != nil {
-		// Log the raw data for debugging
-		log.Printf("Raw data: %s", string(data))
-		return c.Status(500).SendString("Failed to parse exercise categories: " + err.Error())
-	}
-
-	return c.JSON(categories)
-}
-
-func CreateExerciseCategory(c fiber.Ctx) error {
-	var category models.ExerciseCategory
-	if err := c.Bind().Body(&category); err != nil {
-		return c.Status(400).SendString("Invalid category payload: " + err.Error())
-	}
-
-	data, _, err := db.Supabase.From("exercise_categories").
-		Insert(category, false, "", "representation", "").
-		Execute()
-
-	if err != nil {
-		return c.Status(500).SendString("Could not create exercise category: " + err.Error())
-	}
-
-	var result []models.ExerciseCategory
-	if err := json.Unmarshal(data, &result); err != nil {
-		return c.Status(500).SendString("Failed to parse created category data: " + err.Error())
-	}
-
-	return c.JSON(result)
-}
-
 func LogExercise(c fiber.Ctx) error {
-	var logEntry models.ExerciseLog
+	var logEntry models.UpsertExerciseLog
 	if err := c.Bind().Body(&logEntry); err != nil {
 		return c.Status(400).SendString("Invalid exercise log payload: " + err.Error())
 	}
 
-	// if logEntry.ExerciseID == "" || logEntry.UserID == "" || logEntry.Date == "" {
-	// 	return c.Status(400).SendString("Missing required fields")
-	// }
+	// First, fetch the full exercise details
+	exerciseData, _, err := db.Supabase.From("exercises").
+		Select("id, name, tracking_type, description", "exact", false).
+		Eq("id", logEntry.ExerciseID.String()).
+		Execute()
+	if err != nil {
+		return c.Status(500).SendString("Failed to fetch exercise details: " + err.Error())
+	}
 
+	var exercises []struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		TrackingType string `json:"tracking_type"`
+		Description  string `json:"description"`
+	}
+	if err := json.Unmarshal(exerciseData, &exercises); err != nil {
+		return c.Status(500).SendString("Failed to parse exercise data: " + err.Error())
+	}
+
+	if len(exercises) == 0 {
+		return c.Status(404).SendString("Exercise not found")
+	}
+	exercise := exercises[0]
+
+	// Insert the exercise log
 	data, _, err := db.Supabase.From("exercise_logs").Insert(logEntry, false, "", "representation", "").Execute()
 	if err != nil {
 		return c.Status(500).SendString("Failed to log exercise: " + err.Error())
@@ -481,31 +452,152 @@ func LogExercise(c fiber.Ctx) error {
 		return c.Status(500).SendString("Failed to parse logged exercise data: " + err.Error())
 	}
 
-	return c.JSON(result)
+	// Prepare the response with full exercise details
+	response := struct {
+		ID         string                 `json:"id"`
+		UserID     uuid.UUID              `json:"user_id"`
+		Metrics    map[string]interface{} `json:"metrics"`
+		CreatedAt  string                 `json:"created_at"`
+		ExerciseID uuid.UUID              `json:"exercise_id"`
+		Exercise   struct {
+			ID           string `json:"id"`
+			Name         string `json:"name"`
+			TrackingType string `json:"tracking_type"`
+			Description  string `json:"description"`
+		} `json:"exercise"`
+	}{
+		ID:         result[0].ID.String(),
+		UserID:     result[0].UserID,
+		Metrics:    result[0].Metrics,
+		CreatedAt:  result[0].CreatedAt,
+		ExerciseID: result[0].ExerciseID,
+		Exercise: struct {
+			ID           string `json:"id"`
+			Name         string `json:"name"`
+			TrackingType string `json:"tracking_type"`
+			Description  string `json:"description"`
+		}{
+			ID:           exercise.ID,
+			Name:         exercise.Name,
+			TrackingType: exercise.TrackingType,
+			Description:  exercise.Description,
+		},
+	}
+
+	return c.JSON(response)
 }
 
 func GetExerciseLogsByUser(c fiber.Ctx) error {
 	userID := c.Params("user_id")
+
+	// Use a join query to fetch exercise logs with exercise details
 	data, _, err := db.Supabase.From("exercise_logs").
-		Select("*", "exact", false).
+		Select("*, exercise:exercise_id(id, name, description, tracking_type)", "exact", false).
 		Eq("user_id", userID).
-		Order("date", &postgrest.OrderOpts{Ascending: false}).
 		Execute()
+
 	if err != nil {
 		return c.Status(500).SendString("Could not retrieve exercise logs: " + err.Error())
 	}
 
-	var logs []models.ExerciseLog
-	if err := json.Unmarshal(data, &logs); err != nil {
-		return c.Status(500).SendString("Failed to parse exercise logs data: " + err.Error())
+	// Parse into maps first for more flexible handling
+	var rawLogs []map[string]interface{}
+	if err := json.Unmarshal(data, &rawLogs); err != nil {
+		return c.Status(500).SendString("Failed to parse raw exercise logs data: " + err.Error())
 	}
 
-	return c.JSON(logs)
+	// Create a custom response structure with exercise details
+	type ExerciseDetails struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		TrackingType string `json:"tracking_type"`
+		Description  string `json:"description"`
+	}
+
+	type LogWithExercise struct {
+		ID         string                 `json:"id"`
+		UserID     string                 `json:"user_id"`
+		Metrics    map[string]interface{} `json:"metrics"`
+		CreatedAt  string                 `json:"created_at"`
+		ExerciseID string                 `json:"exercise_id"`
+		Exercise   ExerciseDetails        `json:"exercise"`
+	}
+
+	var response []LogWithExercise
+
+	for _, rawLog := range rawLogs {
+		log := LogWithExercise{
+			ID:         getString(rawLog, "id"),
+			UserID:     getString(rawLog, "user_id"),
+			ExerciseID: getString(rawLog, "exercise_id"),
+
+			// Handle metrics
+			Metrics: getMetrics(rawLog),
+
+			// Handle created_at
+			CreatedAt: getString(rawLog, "created_at"),
+		}
+
+		// Extract exercise details from the nested object
+		if exerciseData, ok := rawLog["exercise"].(map[string]interface{}); ok {
+			log.Exercise = ExerciseDetails{
+				ID:           getString(exerciseData, "id"),
+				Name:         getString(exerciseData, "name"),
+				TrackingType: getString(exerciseData, "tracking_type"),
+				Description:  getString(exerciseData, "description"),
+			}
+		}
+
+		response = append(response, log)
+	}
+
+	return c.JSON(response)
+}
+
+// Helper function to safely get string values from map
+func getString(data map[string]interface{}, key string) string {
+	if val, ok := data[key].(string); ok {
+		return val
+	}
+	return ""
+}
+
+// Helper function to format date if needed
+func formatDate(dateStr string) string {
+	// Parse and reformat the date if needed
+	if dateStr == "" {
+		return ""
+	}
+
+	// Try parsing with different formats
+	formats := []string{
+		"2006-01-02",
+		"2006-01-02T15:04:05.999999",
+		time.RFC3339,
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, dateStr); err == nil {
+			// Format as YYYY-MM-DD
+			return t.Format("2006-01-02")
+		}
+	}
+
+	// Return original if parsing fails
+	return dateStr
+}
+
+// Helper function to get metrics
+func getMetrics(data map[string]interface{}) map[string]interface{} {
+	if metrics, ok := data["metrics"].(map[string]interface{}); ok {
+		return metrics
+	}
+	return make(map[string]interface{})
 }
 
 func GetExercises(c fiber.Ctx) error {
 	data, _, err := db.Supabase.From("exercises").
-		Select("id,name,description", "exact", false).
+		Select("id,name,description,tracking_type", "exact", false).
 		Execute()
 
 	if err != nil {

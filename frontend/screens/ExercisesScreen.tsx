@@ -14,46 +14,35 @@ import {
   ActivityIndicator
 } from 'react-native-paper';
 import { useAppContext } from '../context/AppContext';
-import { createExercise, fetchAllExercises, fetchExerciseCategories } from '../lib/api';
+import { createExercise, fetchAllExercises } from '../lib/api';
 
 interface Exercise {
   id: string;
   name: string;
   description: string;
-  category_id: string;
-  category_name: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
 
 export default function ExercisesScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState('');
   const [newExerciseDescription, setNewExerciseDescription] = useState('');
-  const [newExerciseCategoryId, setNewExerciseCategoryId] = useState<string | null>(null);
-  const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
 
   const { selectedActivity } = useAppContext();
 
   useEffect(() => {
     if (selectedActivity) {
       fetchExercises();
-      fetchCategories();
     }
   }, [selectedActivity]);
 
   useEffect(() => {
     filterExercises();
-  }, [exercises, searchQuery, selectedCategory]);
+  }, [exercises, searchQuery]);
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -71,18 +60,6 @@ export default function ExercisesScreen() {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const data = await fetchExerciseCategories();
-
-      if (data && Array.isArray(data)) {
-        setCategories(data);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
   const filterExercises = () => {
     let filtered = [...exercises];
 
@@ -94,23 +71,14 @@ export default function ExercisesScreen() {
       );
     }
 
-    // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter(exercise => exercise.category_id === selectedCategory);
-    }
-
     setFilteredExercises(filtered);
   };
 
   const handleCreateExercise = async () => {
-    if (!newExerciseName.trim() || !newExerciseCategoryId) return;
+    if (!newExerciseName.trim()) return;
 
     try {
-      const newExercise = await createExercise(newExerciseName, newExerciseDescription, newExerciseCategoryId);
-
-      // Get the category name
-      const category = categories.find(cat => cat.id === newExerciseCategoryId);
-      newExercise.category_name = category ? category.name : 'Unknown';
+      const newExercise = await createExercise(newExerciseName, newExerciseDescription);
 
       setExercises([...exercises, newExercise]);
       resetForm();
@@ -122,7 +90,6 @@ export default function ExercisesScreen() {
   const resetForm = () => {
     setNewExerciseName('');
     setNewExerciseDescription('');
-    setNewExerciseCategoryId(null);
     setDialogVisible(false);
   };
 
@@ -130,7 +97,6 @@ export default function ExercisesScreen() {
     <Card style={styles.card}>
       <Card.Content>
         <Text style={styles.exerciseName}>{item.name}</Text>
-        <Chip style={styles.categoryChip}>{item.category_name}</Chip>
         {item.description ? (
           <Text style={styles.description}>{item.description}</Text>
         ) : null}
@@ -138,11 +104,6 @@ export default function ExercisesScreen() {
     </Card>
   );
 
-  const getCategoryName = (categoryId: string | null) => {
-    if (!categoryId) return 'Select Category';
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'Select Category';
-  };
 
   return (
     <View style={styles.container}>
@@ -166,28 +127,6 @@ export default function ExercisesScreen() {
               style={styles.searchbar}
             />
 
-            <View style={styles.filterContainer}>
-              <Text style={styles.filterLabel}>Filter by category:</Text>
-              <View style={styles.chipContainer}>
-                <Chip
-                  selected={selectedCategory === null}
-                  onPress={() => setSelectedCategory(null)}
-                  style={[styles.chip, selectedCategory === null && styles.selectedChip]}
-                >
-                  All
-                </Chip>
-                {categories.map(category => (
-                  <Chip
-                    key={category.id}
-                    selected={selectedCategory === category.id}
-                    onPress={() => setSelectedCategory(category.id)}
-                    style={[styles.chip, selectedCategory === category.id && styles.selectedChip]}
-                  >
-                    {category.name}
-                  </Chip>
-                ))}
-              </View>
-            </View>
           </View>
 
           {filteredExercises.length === 0 ? (
@@ -236,40 +175,13 @@ export default function ExercisesScreen() {
                   style={styles.input}
                 />
 
-                <Text style={styles.dropdownLabel}>Category:</Text>
-                <View style={styles.dropdownContainer}>
-                  <Dropdown
-                    visible={categoryMenuVisible}
-                    onDismiss={() => setCategoryMenuVisible(false)}
-                    anchor={
-                      <Button
-                        mode="outlined"
-                        onPress={() => setCategoryMenuVisible(true)}
-                        style={styles.dropdownButton}
-                      >
-                        {getCategoryName(newExerciseCategoryId)}
-                      </Button>
-                    }
-                  >
-                    {categories.map((category) => (
-                      <Dropdown.Item
-                        key={category.id}
-                        onPress={() => {
-                          setNewExerciseCategoryId(category.id);
-                          setCategoryMenuVisible(false);
-                        }}
-                        title={category.name}
-                      />
-                    ))}
-                  </Dropdown>
-                </View>
               </Dialog.Content>
               <Dialog.Actions>
                 <Button onPress={resetForm}>Cancel</Button>
                 <Button
                   mode="contained"
                   onPress={handleCreateExercise}
-                  disabled={!newExerciseName.trim() || !newExerciseCategoryId}
+                  disabled={!newExerciseName.trim()}
                 >
                   Create
                 </Button>
@@ -342,10 +254,6 @@ const styles = StyleSheet.create({
   exerciseName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  categoryChip: {
-    alignSelf: 'flex-start',
     marginBottom: 8,
   },
   description: {

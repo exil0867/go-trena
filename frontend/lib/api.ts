@@ -33,8 +33,8 @@ export const fetchUserActivities = async (userId: string) => {
 export interface Exercise {
   id: string;
   name: string;
-  category_id: string;
   description: string;
+  tracking_type: 'reps_sets_weight' | 'time_based' | 'distance_based' | 'calories';
 }
 export interface FetchExercisesByGroupResponse {
   exercise_group_id: string;
@@ -75,16 +75,6 @@ export const fetchExercises = async () => {
 
 export const fetchAllExercises = fetchExercises
 
-export const fetchExerciseCategories = async () => {
-  const response = await fetch(`${API_URL}/exercise-categories`, {
-    headers: await getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch exercise categories');
-  }
-  return response.json();
-};
-
 export const addExerciseToGroup = async (groupId: string, exerciseId: string): Promise<AddExerciseToGroupResponse> => {
   const response = await fetch(`${API_URL}/exercise-groups/${groupId}/exercises`, {
     method: 'POST',
@@ -97,7 +87,7 @@ export const addExerciseToGroup = async (groupId: string, exerciseId: string): P
   return response.json();
 };
 
-export const createExercise = async (newExerciseName: string, newExerciseDescription: string, newExerciseCategoryId: string) => {
+export const createExercise = async (newExerciseName: string, newExerciseDescription: string) => {
 
   const response = await fetch(`${API_URL}/exercises`, {
     method: 'POST',
@@ -105,7 +95,6 @@ export const createExercise = async (newExerciseName: string, newExerciseDescrip
     body: JSON.stringify({
       name: newExerciseName.trim(),
       description: newExerciseDescription.trim(),
-      category_id: newExerciseCategoryId,
     }),
   });
 
@@ -145,24 +134,65 @@ export const fetchPlansById = async (selectedActivityId: string) => {
   return response.json();
 };
 
-export const fetchLogs = async () => {
+// Assuming you already have this interface defined elsewhere
+export interface Exercise {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// Interface for a single exercise log with the full exercise object included
+export interface ExerciseLogWithExercise {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  date: string;
+  metrics: Record<string, any>; // or a more specific type if your metrics have a consistent structure
+  created_at: string;
+  exercise: Exercise; // The full exercise object
+}
+
+// Type for the API response (array of logs)
+export type ExerciseLogsResponse = ExerciseLogWithExercise[];
+
+export interface StrengthMetrics {
+  sets: number;
+  reps: number;
+  weight?: number;
+}
+
+export interface CardioMetrics {
+  duration: number;
+  distance?: number;
+  difficulty?: number;
+}
+
+
+export const fetchLogs = async (): Promise<ExerciseLogsResponse> => {
   const user = await supabase.auth.getUser();
   const userId = user.data.user?.id;
 
-  if (userId) {
-    const response = await fetch(`${API_URL}/users/${userId}/exercise-logs`, {
-      headers: await getHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch logs');
-    }
-    const data = await response.json();
-    if (data && Array.isArray(data)) {
-      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
-    return data;
+  if (!userId) {
+    return [];
   }
+
+  const response = await fetch(`${API_URL}/users/${userId}/exercise-logs`, {
+    headers: await getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch logs');
+  }
+
+  const data: ExerciseLogsResponse = await response.json();
+
+  // Sort by date descending (no need to check if array - we know it is now)
+  data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return data;
 };
+
+export type ExerciseMetrics = StrengthMetrics | CardioMetrics;
 
 export const logExercise = async (selectedExerciseId: string, sets: string, reps: string, weight: string, notes: string) => {
   if (!selectedExerciseId || !sets || !reps) return;
@@ -177,10 +207,12 @@ export const logExercise = async (selectedExerciseId: string, sets: string, reps
       body: JSON.stringify({
         user_id: userId,
         exercise_id: selectedExerciseId,
-        sets: parseInt(sets),
-        reps: parseInt(reps),
-        weight: weight ? parseFloat(weight) : 0,
-        notes: notes.trim(),
+        metrics: {
+          sets: parseInt(sets),
+          reps: parseInt(reps),
+          weight: weight ? parseFloat(weight) : 0,
+          notes: notes.trim(),
+        }
       }),
     });
 

@@ -14,7 +14,7 @@ import {
 } from 'react-native-paper';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
-import { fetchExercises, fetchLogs, logExercise } from '../lib/api';
+import { ExerciseLogsResponse, ExerciseLogWithExercise, fetchExercises, fetchLogs, logExercise } from '../lib/api';
 
 interface ExerciseLog {
   id: string;
@@ -34,7 +34,7 @@ interface Exercise {
 }
 
 export default function LogsScreen() {
-  const [logs, setLogs] = useState<ExerciseLog[]>([]);
+  const [logs, setLogs] = useState<ExerciseLogsResponse>([]);
   const [loading, setLoading] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -60,18 +60,8 @@ export default function LogsScreen() {
   const handleFetchLogs = async () => {
     setLoading(true);
     try {
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
-
-      if (userId) {
-        const data = await fetchLogs();
-
-        if (data && Array.isArray(data)) {
-          // Sort by date descending
-          data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          setLogs(data);
-        }
-      }
+      const data = await fetchLogs();
+      setLogs(data);
     } catch (error) {
       console.error('Error fetching exercise logs:', error);
     } finally {
@@ -137,41 +127,57 @@ export default function LogsScreen() {
     });
   };
 
+  const renderMetrics = (item: ExerciseLogWithExercise) => {
+    const { exercise, metrics } = item;
+
+    switch (exercise.tracking_type) {
+      case 'reps_sets_weight':
+        return (
+          <>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{metrics.sets}</Text>
+              <Text style={styles.statLabel}>Sets</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{metrics.reps}</Text>
+              <Text style={styles.statLabel}>Reps</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {metrics.weight ? `${metrics.weight} kg` : '-'}
+              </Text>
+              <Text style={styles.statLabel}>Weight</Text>
+            </View>
+          </>
+        );
+      default:
+        return (
+          <View>
+            <Text style={styles.statValue}>Unknown Metrics</Text>
+          </View>
+        );
+    }
+  };
+
   const getExerciseName = (exerciseId: string | null) => {
     if (!exerciseId) return 'Select Exercise';
     const exercise = exercises.find(ex => ex.id === exerciseId);
     return exercise ? exercise.name : 'Select Exercise';
   };
 
-  const renderItem = ({ item }: { item: ExerciseLog }) => (
+  const renderItem = ({ item }: { item: ExerciseLogWithExercise }) => (
     <Card style={styles.card}>
       <Card.Content>
-        <Text style={styles.exerciseName}>{item.exercise_name}</Text>
+        <Text style={styles.exerciseName}>{item.exercise.name}</Text>
         <Text style={styles.date}>{formatDate(item.created_at)}</Text>
-
         <Divider style={styles.divider} />
-
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{item.sets}</Text>
-            <Text style={styles.statLabel}>Sets</Text>
-          </View>
-
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{item.reps}</Text>
-            <Text style={styles.statLabel}>Reps</Text>
-          </View>
-
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{item.weight > 0 ? `${item.weight} kg` : '-'}</Text>
-            <Text style={styles.statLabel}>Weight</Text>
-          </View>
+          {renderMetrics(item)}
         </View>
-
-        {item.notes ? (
+        {item.metrics.notes ? (
           <View style={styles.notesContainer}>
             <Text style={styles.notesLabel}>Notes:</Text>
-            <Text style={styles.notes}>{item.notes}</Text>
+            <Text style={styles.notes}>{item.metrics.notes}</Text>
           </View>
         ) : null}
       </Card.Content>

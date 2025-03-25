@@ -36,8 +36,6 @@ func main() {
 	app.Post("/exercises", api.CreateExercise)
 	app.Post("/exercise-groups/:group_id/exercises", api.AddExerciseToGroup)
 	app.Get("/exercises", api.GetExercises)
-	app.Get("/exercise-categories", api.GetExerciseCategories)
-	app.Post("/exercise-categories", api.CreateExerciseCategory)
 	app.Post("/exercise-logs", api.LogExercise)
 	app.Get("/users/:user_id/exercise-logs", api.GetExerciseLogsByUser)
 	app.Get("/activities", api.GetActivities)

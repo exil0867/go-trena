@@ -1,41 +1,27 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Seed exercise categories
-INSERT INTO exercise_categories (id, name, measurement_fields) VALUES
-(uuid_generate_v4(), 'Strength', '{"sets": "integer", "reps": "integer", "weight": "float"}'),
-(uuid_generate_v4(), 'Cardio', '{"distance": "float", "duration": "integer", "heart_rate": "integer"}'),
-(uuid_generate_v4(), 'Flexibility', '{"duration": "integer", "difficulty": "integer"}'),
-(uuid_generate_v4(), 'Calisthenics', '{"sets": "integer", "reps": "integer"}');
-
--- Get the IDs of the categories we just inserted
 DO $$
 DECLARE
-    strength_id UUID;
-    cardio_id UUID;
-    flexibility_id UUID;
-    calisthenics_id UUID;
 BEGIN
-    SELECT id INTO strength_id FROM exercise_categories WHERE name = 'Strength' LIMIT 1;
-    SELECT id INTO cardio_id FROM exercise_categories WHERE name = 'Cardio' LIMIT 1;
-    SELECT id INTO flexibility_id FROM exercise_categories WHERE name = 'Flexibility' LIMIT 1;
-    SELECT id INTO calisthenics_id FROM exercise_categories WHERE name = 'Calisthenics' LIMIT 1;
-
     -- Seed exercises
-    INSERT INTO exercises (id, name, category_id, description) VALUES
-    -- Strength exercises
-    (uuid_generate_v4(), 'Bench Press', strength_id, 'Lie on a bench and press weight upward'),
-    (uuid_generate_v4(), 'Squat', strength_id, 'Lower body strength exercise'),
-    (uuid_generate_v4(), 'Deadlift', strength_id, 'Lift barbell from ground to hip level'),
-    -- Cardio exercises
-    (uuid_generate_v4(), 'Running', cardio_id, 'Outdoor or treadmill running'),
-    (uuid_generate_v4(), 'Cycling', cardio_id, 'Stationary or road cycling'),
-    -- Flexibility exercises
-    (uuid_generate_v4(), 'Yoga', flexibility_id, 'Series of postures and breathing exercises'),
-    (uuid_generate_v4(), 'Stretching', flexibility_id, 'Static stretching routines'),
-    -- Calisthenics exercises
-    (uuid_generate_v4(), 'Push-ups', calisthenics_id, 'Upper body calisthenics exercise'),
-    (uuid_generate_v4(), 'Pull-ups', calisthenics_id, 'Upper body pulling exercise');
+    INSERT INTO exercises (id, name, description, tracking_type) VALUES
+    -- Strength exercises (tracked by sets, reps, weight)
+    (uuid_generate_v4(), 'Bench Press', 'Lie on a bench and press weight upward', 'reps_sets_weight'),
+    (uuid_generate_v4(), 'Squat', 'Lower body strength exercise', 'reps_sets_weight'),
+    (uuid_generate_v4(), 'Deadlift', 'Lift barbell from ground to hip level', 'reps_sets_weight'),
+
+    -- Cardio exercises (tracked by time, distance, or calories)
+    (uuid_generate_v4(), 'Running', 'Outdoor or treadmill running', 'distance_based'),
+    (uuid_generate_v4(), 'Cycling', 'Stationary or road cycling', 'distance_based'),
+
+    -- Flexibility exercises (tracked by time held or difficulty level)
+    (uuid_generate_v4(), 'Yoga', 'Series of postures and breathing exercises', 'time_based'),
+    (uuid_generate_v4(), 'Stretching', 'Static stretching routines', 'time_based'),
+
+    -- Calisthenics exercises (tracked by sets and reps)
+    (uuid_generate_v4(), 'Push-ups', 'Upper body calisthenics exercise', 'reps_sets_weight'),
+    (uuid_generate_v4(), 'Pull-ups', 'Upper body pulling exercise', 'reps_sets_weight');
 END $$;
 
 -- Seed activities
@@ -46,8 +32,8 @@ INSERT INTO activities (id, name, description) VALUES
 (uuid_generate_v4(), 'CrossFit', 'High-intensity functional training');
 
 -- Seed users (for testing purposes)
-SELECT public.create_user('john.doe@example.com', 'qwerty');
-SELECT public.create_user('jane.smith@example.com', 'qwerty');
+SELECT public.create_user('john@example.com', 'john');
+SELECT public.create_user('jane@example.com', 'jane');
 
 -- Set up variables for the rest of the script
 DO $$
@@ -85,8 +71,8 @@ DECLARE
     pullups_id UUID;
 BEGIN
     -- Get user IDs
-    SELECT id INTO john_id FROM users WHERE email = 'john.doe@example.com' LIMIT 1;
-    SELECT id INTO jane_id FROM users WHERE email = 'jane.smith@example.com' LIMIT 1;
+    SELECT id INTO john_id FROM users WHERE email = 'john@example.com' LIMIT 1;
+    SELECT id INTO jane_id FROM users WHERE email = 'jane@example.com' LIMIT 1;
 
     -- Get activity IDs
     SELECT id INTO weightlifting_id FROM activities WHERE name = 'Weightlifting' LIMIT 1;
@@ -187,13 +173,13 @@ BEGIN
     (saturday_fortime_id, squat_id);
 
     -- Seed exercise_logs
-    INSERT INTO exercise_logs (id, exercise_id, user_id, date, metrics) VALUES
+    INSERT INTO exercise_logs (id, exercise_id, user_id, metrics) VALUES
     -- John's logs
-    (uuid_generate_v4(), bench_press_id, john_id, '2025-03-10', '{"sets": 3, "reps": 10, "weight": 135}'),
-    (uuid_generate_v4(), squat_id, john_id, '2025-03-12', '{"sets": 4, "reps": 8, "weight": 185}'),
-    (uuid_generate_v4(), running_id_ex, john_id, '2025-03-11', '{"distance": 5.2, "duration": 28, "heart_rate": 165}'),
+    (uuid_generate_v4(), bench_press_id, john_id, '{"sets": 3, "reps": 10, "weight": 135}'),
+    (uuid_generate_v4(), squat_id, john_id, '{"sets": 4, "reps": 8, "weight": 185}'),
+    (uuid_generate_v4(), running_id_ex, john_id, '{"distance": 5.2, "duration": 28, "heart_rate": 165}'),
     -- Jane's logs
-    (uuid_generate_v4(), yoga_id_ex, jane_id, '2025-03-10', '{"duration": 45, "difficulty": 3}'),
-    (uuid_generate_v4(), pushups_id, jane_id, '2025-03-12', '{"sets": 3, "reps": 15}'),
-    (uuid_generate_v4(), pullups_id, jane_id, '2025-03-12', '{"sets": 4, "reps": 8}');
+    (uuid_generate_v4(), yoga_id_ex, jane_id, '{"duration": 45, "difficulty": 3}'),
+    (uuid_generate_v4(), pushups_id, jane_id, '{"sets": 3, "reps": 15}'),
+    (uuid_generate_v4(), pullups_id, jane_id, '{"sets": 4, "reps": 8}');
 END $$;
