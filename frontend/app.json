@@ -1,34 +1,20 @@
 {
   "expo": {
-    "name": "go-trena",
-    "slug": "go-trena",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.anonymous.gotrena"
-    },
+    "scheme": "acme",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
     "web": {
-      "favicon": "./assets/favicon.png"
+      "output": "static"
     },
-    "extra": {
-      "eas": {
-        "projectId": "940d74a2-aa97-43f5-a420-f18fa9323f4e"
-      }
-    }
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://n"
+        }
+      ]
+    ],
+    "name": "trena",
+    "slug": "trena"
   }
 }
