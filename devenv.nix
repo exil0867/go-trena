@@ -1,6 +1,6 @@
 { pkgs, lib, config, ... }: {
   # https://devenv.sh/packages/
-  packages = [ pkgs.jq pkgs.supabase-cli pkgs.air pkgs.watchman pkgs.nodePackages.expo-cli pkgs.tmux ];
+  packages = [ pkgs.jq pkgs.supabase-cli pkgs.air pkgs.watchman pkgs.nodePackages.expo-cli pkgs.tmux pkgs.bun ];
 
   android = {
     enable = true;

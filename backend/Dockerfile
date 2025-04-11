@@ -1,13 +1,16 @@
-FROM golang:1.23.3 AS builder
+FROM oven/bun:1.0.26
 
 WORKDIR /app
+
+COPY package.json .
+COPY bun.lockb .
+
+RUN bun install --production
+
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
-FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/main .
-COPY supabase/migrations /app/migrations
+ENV PORT=3004
 
 EXPOSE 3004
-CMD ["./main"]
+
+CMD ["bun", "start"]
