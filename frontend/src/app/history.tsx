@@ -13,7 +13,7 @@ import {
 import { Link } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppContext } from "../context/AppContext";
-import { fetchLogs, fetchPlansById, fetchExerciseGroupsByPlan, fetchExercises } from "../api/reqs";
+import { fetchLogs, fetchPlans, fetchExerciseGroupsByPlan, fetchExercises } from "../api/reqs";
 
 export default function HistoryScreen() {
     const [loading, setLoading] = useState(false);
@@ -29,13 +29,10 @@ export default function HistoryScreen() {
     const [searchTerm, setSearchTerm] = useState("");
 
     const { top, bottom } = useSafeAreaInsets();
-    const { selectedActivity } = useAppContext();
 
     useEffect(() => {
-        if (selectedActivity) {
-            loadData();
-        }
-    }, [selectedActivity]);
+        loadData();
+    }, []);
 
     useEffect(() => {
         applyFilters();
@@ -44,7 +41,7 @@ export default function HistoryScreen() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const plansData = await fetchPlansById(selectedActivity.id);
+            const plansData = await fetchPlans();
             setPlans(plansData || []);
 
             const groupsData = await Promise.all(

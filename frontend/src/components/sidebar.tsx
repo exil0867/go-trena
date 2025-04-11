@@ -6,9 +6,6 @@ import {
     Animated,
     Pressable,
     StyleSheet,
-    Modal,
-    FlatList,
-    ActivityIndicator
 } from "react-native";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,16 +19,6 @@ export default function Sidebar({ sidebarVisible, width }) {
     ).current;
 
     const { colorScheme } = useColorScheme();
-    const [activityMenuVisible, setActivityMenuVisible] = useState(false);
-
-    // Get the activities data from your context
-    const {
-        activities,
-        selectedActivity,
-        setSelectedActivity,
-        refreshActivities,
-        isLoading
-    } = useAppContext();
 
     // Animate width on prop change
     useEffect(() => {
@@ -87,36 +74,6 @@ export default function Sidebar({ sidebarVisible, width }) {
                 </View>
                 <View style={styles.divider} />
 
-                {/* Activity Selector Section */}
-                <View style={styles.activitySection}>
-                    <Text style={[styles.activityTitle, colorScheme === "dark" && styles.activityTitleDark]}>
-                        Activity
-                    </Text>
-
-                    {isLoading ? (
-                        <ActivityIndicator size="small" style={styles.loading} color="#3B82F6" />
-                    ) : (
-                        <Pressable
-                            style={styles.activitySelector}
-                            onPress={() => setActivityMenuVisible(true)}
-                        >
-                            <Text style={{
-                                color: 'white',
-                                backgroundColor: 'e5e7eb'
-                            }}>
-                                {selectedActivity?.activities?.name || 'Select Activity'}
-                            </Text>
-                            <Ionicons
-                                name="chevron-down"
-                                size={16}
-                                color={colorScheme === "dark" ? "#d1d5db" : "#d1d5db"}
-                            />
-                        </Pressable>
-                    )}
-                </View>
-
-                <View style={styles.divider} />
-
                 <ScrollView style={styles.links}>
                     <NavLink href="/" iconName="home-outline" label="Home" />
                     <NavLink href="/logs" iconName="clipboard-outline" label="Log Exercise" />
@@ -133,61 +90,6 @@ export default function Sidebar({ sidebarVisible, width }) {
                     </Pressable>
                 </View>
 
-                {/* Activity Selection Modal */}
-                <Modal
-                    visible={activityMenuVisible}
-                    transparent={true}
-                    animationType="fade"
-                    onRequestClose={() => setActivityMenuVisible(false)}
-                >
-                    <Pressable
-                        style={styles.modalOverlay}
-                        onPress={() => setActivityMenuVisible(false)}
-                    >
-                        <View
-                            style={[
-                                styles.modalContent,
-                                colorScheme === "dark" ? styles.modalContentDark : styles.modalContentLight
-                            ]}
-                        >
-                            <Text style={[
-                                styles.modalTitle,
-                                colorScheme === "dark" && styles.modalTitleDark
-                            ]}>
-                                Select Activity
-                            </Text>
-
-                            <FlatList
-                                data={activities}
-                                keyExtractor={(item) => item.id.toString()}
-                                renderItem={({ item }) => (
-                                    <Pressable
-                                        style={styles.activityItem}
-                                        onPress={() => {
-                                            setSelectedActivity(item);
-                                            setActivityMenuVisible(false);
-                                        }}
-                                    >
-                                        <Text style={[
-                                            styles.activityItemText,
-                                            colorScheme === "dark" && styles.activityItemTextDark,
-                                            selectedActivity?.id === item.id && styles.selectedActivityText
-                                        ]}>
-                                            {item.activities.name}
-                                        </Text>
-                                        {selectedActivity?.id === item.id && (
-                                            <Ionicons
-                                                name="checkmark"
-                                                size={18}
-                                                color="#3B82F6"
-                                            />
-                                        )}
-                                    </Pressable>
-                                )}
-                            />
-                        </View>
-                    </Pressable>
-                </Modal>
             </View>
         </Animated.View>
     );
@@ -232,36 +134,6 @@ const styles = StyleSheet.create({
         borderColor: "#e5e7eb",
         marginBottom: 16,
     },
-    // Activity Section Styles
-    activitySection: {
-        marginBottom: 16,
-    },
-    activityTitle: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#6b7280",
-        marginBottom: 8,
-    },
-    activityTitleDark: {
-        color: "#9ca3af",
-    },
-    activitySelector: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        backgroundColor: "rgb(31, 41, 55)",
-    },
-    activityText: {
-        fontSize: 15,
-        color: "#3B82F6",
-        fontWeight: "500",
-    },
-    activityTextDark: {
-        color: "#60a5fa",
-    },
     loading: {
         marginTop: 8,
     },
@@ -300,26 +172,6 @@ const styles = StyleSheet.create({
     },
     modalTitleDark: {
         color: "#f3f4f6",
-    },
-    activityItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: "#e5e7eb",
-    },
-    activityItemText: {
-        fontSize: 16,
-        color: "#1f2937",
-    },
-    activityItemTextDark: {
-        color: "#f3f4f6",
-    },
-    selectedActivityText: {
-        color: "#3B82F6",
-        fontWeight: "500",
     },
     // Original styles
     links: {

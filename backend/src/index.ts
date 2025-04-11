@@ -22,19 +22,19 @@ app.use(cors({
 // Auth middleware (exclude certain routes)
 const excludedPaths = ['/auth/signup', '/auth/login', '/auth/refresh', '/auth/user'];
 
-app.use('*', async (c, next) => {
-    const path = c.req.path;
-    if (excludedPaths.includes(path)) {
-        return next();
-    }
+// app.use('*', async (c, next) => {
+//     const path = c.req.path;
+//     if (excludedPaths.includes(path)) {
+//         return next();
+//     }
 
-    // Continue with JWT authentication
-    const jwtMiddleware = jwt({
-        secret: config.jwtSecret,
-    });
+//     // Continue with JWT authentication
+//     const jwtMiddleware = jwt({
+//         secret: config.jwtSecret,
+//     });
 
-    return jwtMiddleware(c, next);
-});
+//     return jwtMiddleware(c, next);
+// });
 
 // Auth routes
 app.post('/auth/signup', routes.signUp);
@@ -60,11 +60,6 @@ app.get('/exercises', routes.getExercises);
 // Exercise log routes
 app.post('/exercise-logs', routes.logExercise);
 app.get('/users/:userId/exercise-logs', routes.getExerciseLogsByUser);
-
-// Activity routes
-app.get('/activities', routes.getActivities);
-app.post('/user-activities', routes.addUserActivity);
-app.get('/user-activities', routes.getUserActivities);
 
 // Start the server
 console.log(`Server is running on port ${config.port}`);

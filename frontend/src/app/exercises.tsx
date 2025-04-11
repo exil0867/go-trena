@@ -29,15 +29,8 @@ export default function ExercisesScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [newExerciseName, setNewExerciseName] = useState("");
     const [newExerciseDescription, setNewExerciseDescription] = useState("");
-    const { selectedActivity } = useAppContext();
     const navigation = useNavigation<any>();
     const { top, bottom } = useSafeAreaInsets();
-
-    useEffect(() => {
-        if (selectedActivity) {
-            fetchExercises();
-        }
-    }, [selectedActivity]);
 
     useEffect(() => {
         filterExercises();
@@ -129,17 +122,7 @@ export default function ExercisesScreen() {
 
             {/* Content Container */}
             <View className="flex-1 px-4">
-                {!selectedActivity ? (
-                    <View className="flex-1 items-center justify-center px-6">
-                        <Text className="text-center text-gray-600 dark:text-gray-400">
-                            Please select an activity from the drawer menu
-                        </Text>
-                    </View>
-                ) : loading && exercises.length === 0 ? (
-                    <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color="#10b981" />
-                    </View>
-                ) : (
+                {(
                     <>
                         {/* Search Bar */}
                         <View className="mb-4">
@@ -176,7 +159,7 @@ export default function ExercisesScreen() {
             </View>
 
             {/* FAB Button */}
-            {selectedActivity && (
+            {(
                 <TouchableOpacity
                     className="absolute bottom-6 right-6 w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-full items-center justify-center shadow-lg"
                     onPress={() => setVisible(true)}

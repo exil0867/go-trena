@@ -43,14 +43,9 @@ export async function createPlan(c: Context) {
 }
 
 export async function getPlans(c: Context) {
-    const activityId = c.req.param('activityId');
 
     try {
         let query = supabase.from('plans').select('*');
-
-        if (activityId) {
-            query = query.eq('activity_id', activityId);
-        }
 
         const { data, error } = await query;
 

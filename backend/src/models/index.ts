@@ -34,6 +34,7 @@ export const ExerciseGroupSchema = z.object({
     id: z.string().uuid().optional(),
     name: z.string(),
     plan_id: z.string().uuid(),
+    day_of_week: z.number(),
     created_at: z.string().optional(),
 });
 

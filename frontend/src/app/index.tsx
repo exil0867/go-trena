@@ -13,12 +13,11 @@ import {
 import { Link, router, useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppContext } from "../context/AppContext";
-import { createPlan, fetchPlansById } from "../api/reqs";
+import { createPlan, fetchPlans } from "../api/reqs";
 
 interface Plan {
     id: string;
     name: string;
-    activity_id: string;
 }
 
 export default function PlansScreen() {
@@ -26,23 +25,19 @@ export default function PlansScreen() {
     const [loading, setLoading] = useState(false);
     const [visible, setVisible] = useState(false);
     const [newPlanName, setNewPlanName] = useState("");
-    const { selectedActivity } = useAppContext();
     const navigation = useNavigation<any>();
     const { top, bottom } = useSafeAreaInsets();
 
     useEffect(() => {
-        if (selectedActivity) {
-            console.log('fetch plans', selectedActivity)
-            handleFetchPlans();
-        }
-    }, [selectedActivity]);
+        handleFetchPlans();
+    }, []);
+
 
     const handleFetchPlans = async () => {
-        if (!selectedActivity) return;
 
         setLoading(true);
         try {
-            const data = await fetchPlansById(selectedActivity.id);
+            const data = await fetchPlans();
             console.log('fetch plans', data)
 
             if (data && Array.isArray(data)) {
@@ -56,10 +51,10 @@ export default function PlansScreen() {
     };
 
     const handleCreatePlan = async () => {
-        if (!selectedActivity || !newPlanName.trim()) return;
+        if (!newPlanName.trim()) return;
 
         try {
-            const newPlan = await createPlan(selectedActivity.id, newPlanName);
+            const newPlan = await createPlan(newPlanName);
             setPlans([...plans, newPlan]);
             setNewPlanName("");
             setVisible(false);
@@ -101,17 +96,7 @@ export default function PlansScreen() {
 
             {/* Content Container */}
             <View className="flex-1 px-4">
-                {!selectedActivity ? (
-                    <View className="flex-1 items-center justify-center px-6">
-                        <Text className="text-center text-gray-600 dark:text-gray-400">
-                            Please select an activity from the drawer menu
-                        </Text>
-                    </View>
-                ) : loading ? (
-                    <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color="#10b981" />
-                    </View>
-                ) : (
+                {(
                     <>
                         {plans.length === 0 ? (
                             <View className="flex-1 items-center justify-center px-6">
@@ -135,7 +120,7 @@ export default function PlansScreen() {
             </View>
 
             {/* FAB Button */}
-            {selectedActivity && (
+            {(
                 <TouchableOpacity
                     className="absolute bottom-6 right-6 w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-full items-center justify-center shadow-lg"
                     onPress={() => setVisible(true)}

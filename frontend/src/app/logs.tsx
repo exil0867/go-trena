@@ -14,7 +14,7 @@ import {
 import { Link, useNavigation, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppContext } from "../context/AppContext";
-import { fetchPlansById, fetchExerciseGroupsByPlan, fetchExercisesByGroup, logExercise, fetchRecentLogs } from "../api/reqs";
+import { fetchPlans, fetchExerciseGroupsByPlan, fetchExercisesByGroup, logExercise, fetchRecentLogs } from "../api/reqs";
 
 interface Plan {
     id: string;
@@ -66,18 +66,15 @@ export default function LogsScreen() {
     const [planMenuVisible, setPlanMenuVisible] = useState(false);
     const [groupMenuVisible, setGroupMenuVisible] = useState(false);
 
-    const { selectedActivity } = useAppContext();
     const navigation = useNavigation<any>();
     const { top, bottom } = useSafeAreaInsets();
 
     const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     useEffect(() => {
-        if (selectedActivity) {
-            fetchPlans();
-            fetchRecentLogsData(); // Fetch recent logs on initial load
-        }
-    }, [selectedActivity]);
+        handleFetchPlans();
+        fetchRecentLogsData(); // Fetch recent logs on initial load
+    }, []);
 
     useEffect(() => {
         if (selectedPlan) {
@@ -91,10 +88,10 @@ export default function LogsScreen() {
         }
     }, [selectedGroup]);
 
-    const fetchPlans = async () => {
+    const handleFetchPlans = async () => {
         setLoading(true);
         try {
-            const data = await fetchPlansById(selectedActivity.id);
+            const data = await fetchPlans();
             if (data && Array.isArray(data)) {
                 setPlans(data);
             }
@@ -287,17 +284,7 @@ export default function LogsScreen() {
 
             {/* Content Container */}
             <View className="flex-1 px-4">
-                {!selectedActivity ? (
-                    <View className="flex-1 items-center justify-center px-6">
-                        <Text className="text-center text-gray-600 dark:text-gray-400">
-                            Please select an activity from the drawer menu
-                        </Text>
-                    </View>
-                ) : loading && plans.length === 0 ? (
-                    <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color="#10b981" />
-                    </View>
-                ) : (
+                {(
                     <ScrollView className="flex-1">
                         {/* Plan Selection */}
                         <View className="mb-6">

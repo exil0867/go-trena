@@ -73,12 +73,7 @@ export async function getExercisesByGroup(c: Context) {
         }
 
         // Prepare response
-        const exercises = exerciseRelations?.map(relation => ({
-            id: relation.exercises[0].id,
-            name: relation.exercises[0].name,
-            description: relation.exercises[0].description,
-            tracking_type: relation.exercises[0].tracking_type
-        })) || [];
+        const exercises = exerciseRelations?.map(relation => (relation.exercises)) || [];
 
         return c.json({
             exercise_group_id: groupId,

@@ -24,13 +24,6 @@ BEGIN
     (uuid_generate_v4(), 'Pull-ups', 'Upper body pulling exercise', 'reps_sets_weight');
 END $$;
 
--- Seed activities
-INSERT INTO activities (id, name, description) VALUES
-(uuid_generate_v4(), 'Weightlifting', 'Resistance training using weights'),
-(uuid_generate_v4(), 'Running', 'Cardio exercise on foot'),
-(uuid_generate_v4(), 'Yoga', 'Mind-body practice'),
-(uuid_generate_v4(), 'CrossFit', 'High-intensity functional training');
-
 -- Seed users (for testing purposes)
 SELECT public.create_user('john@example.com', 'john');
 SELECT public.create_user('jane@example.com', 'jane');
@@ -74,12 +67,6 @@ BEGIN
     SELECT id INTO john_id FROM users WHERE email = 'john@example.com' LIMIT 1;
     SELECT id INTO jane_id FROM users WHERE email = 'jane@example.com' LIMIT 1;
 
-    -- Get activity IDs
-    SELECT id INTO weightlifting_id FROM activities WHERE name = 'Weightlifting' LIMIT 1;
-    SELECT id INTO running_id FROM activities WHERE name = 'Running' LIMIT 1;
-    SELECT id INTO yoga_id FROM activities WHERE name = 'Yoga' LIMIT 1;
-    SELECT id INTO crossfit_id FROM activities WHERE name = 'CrossFit' LIMIT 1;
-
     -- Get exercise IDs
     SELECT id INTO bench_press_id FROM exercises WHERE name = 'Bench Press' LIMIT 1;
     SELECT id INTO squat_id FROM exercises WHERE name = 'Squat' LIMIT 1;
@@ -91,32 +78,12 @@ BEGIN
     SELECT id INTO pushups_id FROM exercises WHERE name = 'Push-ups' LIMIT 1;
     SELECT id INTO pullups_id FROM exercises WHERE name = 'Pull-ups' LIMIT 1;
 
-    -- Seed user activities
-    INSERT INTO user_activities (id, user_id, activity_id) VALUES
-    (uuid_generate_v4(), john_id, weightlifting_id),
-    (uuid_generate_v4(), john_id, running_id),
-    (uuid_generate_v4(), jane_id, yoga_id),
-    (uuid_generate_v4(), jane_id, crossfit_id);
-
-    -- Get user activity IDs
-    SELECT id INTO john_weightlifting_id FROM user_activities
-    WHERE user_id = john_id AND activity_id = weightlifting_id LIMIT 1;
-
-    SELECT id INTO john_running_id FROM user_activities
-    WHERE user_id = john_id AND activity_id = running_id LIMIT 1;
-
-    SELECT id INTO jane_yoga_id FROM user_activities
-    WHERE user_id = jane_id AND activity_id = yoga_id LIMIT 1;
-
-    SELECT id INTO jane_crossfit_id FROM user_activities
-    WHERE user_id = jane_id AND activity_id = crossfit_id LIMIT 1;
-
     -- Seed plans
-    INSERT INTO plans (id, user_activity_id, name) VALUES
-    (uuid_generate_v4(), john_weightlifting_id, 'John''s Strength Plan'),
-    (uuid_generate_v4(), john_running_id, 'John''s Cardio Plan'),
-    (uuid_generate_v4(), jane_yoga_id, 'Jane''s Yoga Plan'),
-    (uuid_generate_v4(), jane_crossfit_id, 'Jane''s CrossFit Plan');
+    INSERT INTO plans (id, user_id, name) VALUES
+    (uuid_generate_v4(), john_id, 'John''s Strength Plan'),
+    (uuid_generate_v4(), john_id, 'John''s Cardio Plan'),
+    (uuid_generate_v4(), jane_id, 'Jane''s Yoga Plan'),
+    (uuid_generate_v4(), jane_id, 'Jane''s CrossFit Plan');
 
     -- Get plan IDs
     SELECT id INTO john_strength_plan_id FROM plans WHERE name = 'John''s Strength Plan' LIMIT 1;

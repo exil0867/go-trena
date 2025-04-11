@@ -21,7 +21,7 @@ import {
     addExerciseToGroup,
     FetchExercisesByGroupResponse,
     Exercise,
-    fetchPlansById
+    fetchPlans
 } from "../../api/reqs";
 import { useAppContext } from "@/context/AppContext";
 
@@ -45,7 +45,6 @@ interface DayItem {
 }
 
 export default function PlanDetailScreen() {
-    const { selectedActivity } = useAppContext();
     const params = useLocalSearchParams<{ plan: string }>();
     const [plan, setPlan] = useState<Plan | null>(null)
 
@@ -81,7 +80,7 @@ export default function PlanDetailScreen() {
     useEffect(() => {
         const fetchData = async () => {
             if (params.plan) {
-                const plans = await fetchPlansById(selectedActivity.id);
+                const plans = await fetchPlans();
                 const plan = plans.find((p) => p.id === params.plan)
                 setPlan(plan)
             }

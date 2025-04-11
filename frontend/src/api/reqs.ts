@@ -123,9 +123,8 @@ export const fetchRecentLogs = async (limit: number) => {
     }
 };
 
-export const fetchPlansById = async (selectedActivityId: string) => {
-    if (!selectedActivityId) return;
-    const response = await fetch(`${API_URL}/plans?activityId=${selectedActivityId}`, {
+export const fetchPlans = async () => {
+    const response = await fetch(`${API_URL}/plans`, {
         headers: await getHeaders(),
     });
     if (!response.ok) {
@@ -258,17 +257,14 @@ export const createExerciseGroup = async (planId: string, currentDay: number | n
     return (response.json());
 };
 
-export const createPlan = async (selectedActivityId: string, newPlanName: string) => {
-    if (!selectedActivityId || !newPlanName.trim()) return;
-
-    console.log(selectedActivityId)
+export const createPlan = async (newPlanName: string) => {
+    if (!newPlanName.trim()) return;
 
     const response = await fetch(`${API_URL}/plans`, {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify({
             name: newPlanName.trim(),
-            user_activity_id: selectedActivityId,
         }),
     });
 
